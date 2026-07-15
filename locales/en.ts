@@ -74,6 +74,23 @@ const en = {
   cardEnding: "Visa •••• 4242",
   addCard: "Add Card",
   updatePassword: "Update Password",
+  // Auth
+  welcomeBack: "Welcome Back",
+  signInToContinue: "Sign in to continue your discipline",
+  createAccount: "Create Account",
+  startYourJourney: "Start your discipline journey",
+  fullName: "Full Name",
+  enterFullName: "Enter your full name",
+  password: "Password",
+  enterPassword: "Enter your password",
+  createPassword: "Create a password",
+  signIn: "Sign In",
+  signUp: "Sign Up",
+  dontHaveAccount: "Don't have an account?",
+  alreadyHaveAccount: "Already have an account?",
+  invalidEmail: "Please enter a valid email",
+  passwordTooShort: "Password must be at least 6 characters",
+  nameRequired: "Please enter your name",
 };
 
 

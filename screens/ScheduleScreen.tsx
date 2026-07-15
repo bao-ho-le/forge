@@ -11,8 +11,7 @@ import { Typography } from "../constants/typography";
 import { IconSize } from "../constants/iconSizes";
 import WeekSelector, { DAYS } from "../components/WeekSelector";
 import WorkoutScheduleCard from "../components/WorkoutScheduleCard";
-import BottomTabBar from "../components/BottomTabBar";
-import { navigateToTab } from "../constants/tabNavigation";
+import { TAB_BAR_HEIGHT } from "../constants/tabNavigation";
 import AddWorkoutModal from "../components/AddWorkoutModal";
 import AppIcon from "../components/Icon/AppIcon";
 
@@ -72,7 +71,7 @@ export default function ScheduleScreen() {
         className="flex-1"
         contentContainerStyle={{
           paddingTop: insets.top + 16,
-          paddingBottom: 32,
+          paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 32,
           paddingHorizontal: 20,
         }}
         showsVerticalScrollIndicator={false}
@@ -201,12 +200,6 @@ export default function ScheduleScreen() {
         defaultDay={selectedDay}
         onClose={() => setShowModal(false)}
         onAdd={handleAddWorkout}
-      />
-
-      {/* ===== BOTTOM TAB BAR ===== */}
-      <BottomTabBar
-        activeTab="calendar"
-        onTabPress={(tab) => navigateToTab("calendar", tab)}
       />
     </View>
   );

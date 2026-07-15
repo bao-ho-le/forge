@@ -31,7 +31,7 @@ export default function BottomTabBar({
 
   return (
     <View
-      className="flex-row rounded-t-3xl pt-3 pb-7 px-5"
+      className="absolute bottom-0 left-0 right-0 flex-row rounded-t-3xl pt-3 pb-7 px-5"
       style={{
         backgroundColor: colors.surface,
         shadowColor: "#000",

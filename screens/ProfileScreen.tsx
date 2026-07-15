@@ -8,6 +8,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { router } from "expo-router";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 import { useTranslation } from "../components/Localization/LanguageProvider";
 import { Typography } from "../constants/typography";
 import { IconSize } from "../constants/iconSizes";
@@ -16,12 +17,12 @@ import ProfileSection from "../components/ProfileSection";
 import AppIcon from "../components/Icon/AppIcon";
 import ProfileSettingRow from "../components/ProfileSettingRow";
 import AppearanceSelector from "../components/AppearanceSelector";
-import BottomTabBar from "../components/BottomTabBar";
-import { navigateToTab } from "../constants/tabNavigation";
+import { TAB_BAR_HEIGHT } from "../constants/tabNavigation";
 import ThemedSwitch from "../components/ThemedSwitch";
 
 export default function ProfileScreen() {
   const { colors, isDark } = useTheme();
+  const { signOut } = useAuth();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
 
@@ -45,7 +46,7 @@ export default function ProfileScreen() {
         className="flex-1"
         contentContainerStyle={{
           paddingTop: insets.top + 16,
-          paddingBottom: 32,
+          paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 32,
           paddingHorizontal: 20,
         }}
         showsVerticalScrollIndicator={false}
@@ -277,7 +278,7 @@ export default function ProfileScreen() {
         {/* ===== SIGN OUT BUTTON ===== */}
         <Animated.View style={[signOutStyle, { marginTop: 8 }]}>
           <Pressable
-            onPress={() => {}}
+            onPress={signOut}
             onPressIn={() => {
               scale.value = withTiming(0.95, { duration: 80 });
             }}
@@ -312,15 +313,7 @@ export default function ProfileScreen() {
           </Pressable>
         </Animated.View>
 
-        {/* Bottom spacer */}
-        <View className="h-5" />
       </ScrollView>
-
-      {/* ===== BOTTOM TAB BAR ===== */}
-      <BottomTabBar
-        activeTab="profile"
-        onTabPress={(tab) => navigateToTab("profile", tab)}
-      />
     </View>
   );
 }

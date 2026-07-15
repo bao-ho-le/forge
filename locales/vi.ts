@@ -74,6 +74,23 @@ const vi = {
   cardEnding: "Visa •••• 4242",
   addCard: "Thêm Thẻ",
   updatePassword: "Cập Nhật Mật Khẩu",
+  // Auth
+  welcomeBack: "Chào Mừng Trở Lại",
+  signInToContinue: "Đăng nhập để tiếp tục hành trình kỷ luật",
+  createAccount: "Tạo Tài Khoản",
+  startYourJourney: "Bắt đầu hành trình kỷ luật",
+  fullName: "Họ Tên",
+  enterFullName: "Nhập họ tên của bạn",
+  password: "Mật Khẩu",
+  enterPassword: "Nhập mật khẩu",
+  createPassword: "Tạo mật khẩu",
+  signIn: "Đăng Nhập",
+  signUp: "Đăng Ký",
+  dontHaveAccount: "Chưa có tài khoản?",
+  alreadyHaveAccount: "Đã có tài khoản?",
+  invalidEmail: "Vui lòng nhập email hợp lệ",
+  passwordTooShort: "Mật khẩu phải có ít nhất 6 ký tự",
+  nameRequired: "Vui lòng nhập họ tên",
 };
 
 

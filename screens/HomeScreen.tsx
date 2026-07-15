@@ -11,8 +11,7 @@ import ScheduleCard from "../components/ScheduleCard";
 import RecoveryCard from "../components/RecoveryCard";
 import ThemeToggle from "../components/ThemeToggle";
 import AppIcon from "../components/Icon/AppIcon";
-import BottomTabBar from "../components/BottomTabBar";
-import { navigateToTab } from "../constants/tabNavigation";
+import { TAB_BAR_HEIGHT } from "../constants/tabNavigation";
 
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
@@ -52,7 +51,7 @@ export default function HomeScreen() {
         className="flex-1"
         contentContainerStyle={{
           paddingTop: insets.top + 16,
-          paddingBottom: 8,
+          paddingBottom: insets.bottom + TAB_BAR_HEIGHT + 8,
           paddingHorizontal: 20,
         }}
         showsVerticalScrollIndicator={false}
@@ -151,15 +150,7 @@ export default function HomeScreen() {
         {/* ===== RECOVERY SECTION ===== */}
         <RecoveryCard />
 
-        {/* Spacer at bottom for tab bar */}
-        <View className="h-5" />
       </ScrollView>
-
-      {/* ===== BOTTOM TAB BAR ===== */}
-      <BottomTabBar
-        activeTab="home"
-        onTabPress={(tab) => navigateToTab("home", tab)}
-      />
     </View>
   );
 }

@@ -23,6 +23,9 @@ export const Colors = {
     info: "#2F5D8A",
     infoContainer: "#D9DFE3",
 
+    error: "#F03059",
+    errorContainer: "#F6DFE4",
+
     surfaceSecondary: "#EFEEEA",
   },
   dark: {
@@ -47,6 +50,9 @@ export const Colors = {
     premiumContainer: "#38322C",
     info: "#7BA7D1",
     infoContainer: "#2B323B",
+
+    error: "#FF4D6D",
+    errorContainer: "#441D25",
 
     surfaceSecondary: "#242426",
   },
