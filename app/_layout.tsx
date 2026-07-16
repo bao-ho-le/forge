@@ -62,7 +62,7 @@ function RootLayoutNav() {
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
-      <Stack screenOptions={{ headerShown: false, animationDuration: 300 }}>
+      <Stack screenOptions={{ headerShown: false, animationDuration: 180 }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="index" options={tabScreenOptions} />
         <Stack.Screen name="calendar" options={tabScreenOptions} />

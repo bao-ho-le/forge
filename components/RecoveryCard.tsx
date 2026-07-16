@@ -24,8 +24,8 @@ export default function RecoveryCard() {
         style={{
           backgroundColor: colors.surfaceSecondary,
           borderColor: isDark
-            ? "rgba(255,77,109,0.1)"
-            : "rgba(240,48,89,0.2)",
+            ? "rgba(255,77,109,0.25)"
+            : "rgba(240,48,89,0.32)",
         }}
       >
         <View className="flex-row items-center">
@@ -66,10 +66,10 @@ export default function RecoveryCard() {
             style={{ backgroundColor: colors.surfaceMuted }}
           >
             <AppIcon
-              name="arrowRight"
+              name="chevronRight"
               size={IconSize.sm}
               color={colors.textSecondary}
-              strokeWidth={2}
+              strokeWidth={2.5}
             />
           </View>
         </View>

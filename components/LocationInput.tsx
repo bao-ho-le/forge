@@ -26,6 +26,7 @@ export default function LocationInput({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.textSecondary}
+        keyboardAppearance="light"
         className="py-3.5"
         style={[Typography.body, { color: colors.textPrimary }]}
       />

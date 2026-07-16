@@ -25,6 +25,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Discipline uses your location to verify you're at your gym when you check in."
+        }
+      ]
+    ]
   }
 }

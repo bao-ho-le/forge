@@ -22,9 +22,11 @@ import ThemedSwitch from "../components/ThemedSwitch";
 
 export default function ProfileScreen() {
   const { colors, isDark } = useTheme();
-  const { signOut } = useAuth();
+  const { session, profile, signOut } = useAuth();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const displayName = profile?.full_name || session?.user?.email || "";
+  const email = session?.user?.email ?? "";
 
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [alertsEnabled, setAlertsEnabled] = useState(true);
@@ -65,7 +67,7 @@ export default function ProfileScreen() {
 
         {/* ===== USER PROFILE HEADER ===== */}
         <View>
-          <ProfileHeader />
+          <ProfileHeader name={displayName} />
         </View>
 
         {/* ===== PERSONAL INFORMATION ===== */}
@@ -74,14 +76,14 @@ export default function ProfileScreen() {
           <ProfileSettingRow
             icon="user"
             title="Name"
-            value="Le Vo"
+            value={displayName}
             isLast={false}
             onPress={() => router.push("/edit-name")}
           />
           <ProfileSettingRow
             icon="mail"
             title={t("email")}
-            value="levo@example.com"
+            value={email}
             isLast={false}
             onPress={() => router.push("/edit-email")}
           />
@@ -114,7 +116,6 @@ export default function ProfileScreen() {
           <ProfileSettingRow
             icon="mapPin"
             title={t("gymLocation")}
-            value={t("location")}
             isLast={false}
             onPress={() => router.push("/gym-location")}
           />

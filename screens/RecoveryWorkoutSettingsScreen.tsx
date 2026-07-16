@@ -85,6 +85,13 @@ export default function RecoveryWorkoutSettingsScreen() {
           </Text>
         </View>
 
+        <Text
+          className="mb-6 px-0.5"
+          style={[Typography.caption, { color: colors.textSecondary }]}
+        >
+          {t("recoveryWorkoutHint")}
+        </Text>
+
         {/* Push-up Target Card */}
         <View
           className="rounded-[20px] p-6 items-center"
@@ -150,13 +157,15 @@ export default function RecoveryWorkoutSettingsScreen() {
                 value={editValue}
                 onChangeText={setEditValue}
                 keyboardType="number-pad"
+                keyboardAppearance="light"
                 selectTextOnFocus
                 onBlur={finishEditing}
                 onSubmitEditing={finishEditing}
-                className="text-center min-w-20 py-0"
+                maxLength={3}
+                className="text-center py-0"
                 style={[
                   Typography.display,
-                  { color: colors.primary, letterSpacing: -1 },
+                  { color: colors.primary, letterSpacing: -1, width: 80 },
                 ]}
               />
             ) : (

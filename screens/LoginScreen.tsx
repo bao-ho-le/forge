@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -14,10 +14,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useGoogleSignIn } from "../hooks/useGoogleSignIn";
 import { useTranslation } from "../components/Localization/LanguageProvider";
 import { Typography } from "../constants/typography";
 import { IconSize } from "../constants/iconSizes";
 import AppIcon from "../components/Icon/AppIcon";
+import GoogleIcon from "../components/Icon/GoogleIcon";
+import { suggestEmailDomain } from "../lib/emailTypo";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -26,13 +29,22 @@ export default function LoginScreen() {
   const { signIn } = useAuth();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const google = useGoogleSignIn();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (google.error) {
+      setFormError(google.error);
+      google.clearError();
+    }
+  }, [google.error]);
 
   const handleSignIn = async () => {
     const trimmedEmail = email.trim();
@@ -103,12 +115,12 @@ export default function LoginScreen() {
         ) : null}
 
         <View className="mb-4">
-          <Text
-            className="mb-2 px-0.5"
-            style={[Typography.overline, { color: colors.textSecondary }]}
-          >
-            {t("email")}
-          </Text>
+          <View className="flex-row items-center gap-1.5 mb-2 px-0.5">
+            <AppIcon name="mail" size={14} color={colors.primary} strokeWidth={2} />
+            <Text style={[Typography.overline, { color: colors.textSecondary }]}>
+              {t("email")}
+            </Text>
+          </View>
           <View
             className="flex-row items-center rounded-2xl px-4"
             style={{
@@ -117,24 +129,21 @@ export default function LoginScreen() {
               borderColor: emailError ? colors.error : colors.border,
             }}
           >
-            <AppIcon
-              name="mail"
-              size={IconSize.sm}
-              color={colors.textSecondary}
-              strokeWidth={2}
-            />
             <TextInput
               value={email}
               onChangeText={(value) => {
                 setEmail(value);
                 if (emailError) setEmailError(null);
+                if (emailSuggestion) setEmailSuggestion(null);
               }}
+              onBlur={() => setEmailSuggestion(suggestEmailDomain(email.trim()))}
               placeholder={t("enterEmail")}
               placeholderTextColor={colors.textSecondary}
+              keyboardAppearance="light"
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="email-address"
-              className="flex-1 ml-3 py-3.5"
+              className="flex-1 py-3.5"
               style={[Typography.body, { color: colors.textPrimary }]}
             />
           </View>
@@ -146,15 +155,32 @@ export default function LoginScreen() {
               {emailError}
             </Text>
           ) : null}
+          {!emailError && emailSuggestion ? (
+            <Pressable
+              className="mt-1.5 px-0.5"
+              onPress={() => {
+                setEmail(emailSuggestion);
+                setEmailSuggestion(null);
+              }}
+            >
+              <Text style={[Typography.caption, { color: colors.textSecondary }]}>
+                {t("emailDidYouMean")}{" "}
+                <Text style={{ color: colors.primary, fontWeight: "700" }}>
+                  {emailSuggestion}
+                </Text>
+                ?
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
 
         <View className="mb-6">
-          <Text
-            className="mb-2 px-0.5"
-            style={[Typography.overline, { color: colors.textSecondary }]}
-          >
-            {t("password")}
-          </Text>
+          <View className="flex-row items-center gap-1.5 mb-2 px-0.5">
+            <AppIcon name="lock" size={14} color={colors.primary} strokeWidth={2} />
+            <Text style={[Typography.overline, { color: colors.textSecondary }]}>
+              {t("password")}
+            </Text>
+          </View>
           <View
             className="flex-row items-center rounded-2xl px-4"
             style={{
@@ -163,12 +189,6 @@ export default function LoginScreen() {
               borderColor: passwordError ? colors.error : colors.border,
             }}
           >
-            <AppIcon
-              name="lock"
-              size={IconSize.sm}
-              color={colors.textSecondary}
-              strokeWidth={2}
-            />
             <TextInput
               value={password}
               onChangeText={(value) => {
@@ -177,9 +197,10 @@ export default function LoginScreen() {
               }}
               placeholder={t("enterPassword")}
               placeholderTextColor={colors.textSecondary}
+              keyboardAppearance="light"
               autoCapitalize="none"
               secureTextEntry
-              className="flex-1 ml-3 py-3.5"
+              className="flex-1 py-3.5"
               style={[Typography.body, { color: colors.textPrimary }]}
             />
           </View>
@@ -218,6 +239,52 @@ export default function LoginScreen() {
             >
               {t("signIn")}
             </Text>
+          )}
+        </Pressable>
+
+        <View className="flex-row items-center my-6">
+          <View className="flex-1 h-[1px]" style={{ backgroundColor: colors.border }} />
+          <Text
+            className="mx-3"
+            style={[Typography.caption, { color: colors.textSecondary }]}
+          >
+            {t("orDivider")}
+          </Text>
+          <View className="flex-1 h-[1px]" style={{ backgroundColor: colors.border }} />
+        </View>
+
+        <Pressable
+          onPress={() => google.promptAsync()}
+          disabled={!google.isReady || google.isSigningIn}
+          style={({ pressed }) => ({
+            alignSelf: "stretch",
+            paddingVertical: 16,
+            borderRadius: 20,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            backgroundColor: colors.surface,
+            borderWidth: isDark ? 0 : 1,
+            borderColor: colors.border,
+            opacity: !google.isReady || google.isSigningIn ? 0.6 : pressed ? 0.85 : 1,
+            transform: [{ scale: pressed ? 0.97 : 1 }],
+          })}
+        >
+          {google.isSigningIn ? (
+            <ActivityIndicator color={colors.textPrimary} />
+          ) : (
+            <>
+              <GoogleIcon size={IconSize.sm} />
+              <Text
+                style={[
+                  Typography.bodyLarge,
+                  { color: colors.textPrimary, letterSpacing: 0.3 },
+                ]}
+              >
+                {t("continueWithGoogle")}
+              </Text>
+            </>
           )}
         </Pressable>
 

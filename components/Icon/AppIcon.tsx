@@ -6,6 +6,7 @@ export type IconName =
   | "dumbbell"
   | "clock"
   | "mapPin"
+  | "mapPinOff"
   | "calendar"
   | "calendarDate"
   | "lightning"
@@ -17,6 +18,7 @@ export type IconName =
   | "moon"
   | "sun"
   | "arrowRight"
+  | "arrowUp"
   | "play"
   | "plusCircle"
   | "mail"
@@ -29,13 +31,19 @@ export type IconName =
   | "logOut"
   | "bell"
   | "chevronLeft"
+  | "chevronRight"
   | "music"
   | "image"
   | "camera"
   | "gameController"
   | "checkCircle"
   | "check"
-  | "calendarEmpty";
+  | "calendarEmpty"
+  | "chevronDown"
+  | "eye"
+  | "eyeOff"
+  | "ruler"
+  | "search";
 
 type AppIconProps = {
   name: IconName;
@@ -92,6 +100,17 @@ function MapPin({ color, strokeWidth }: IconComponentProps) {
     <G fill="none" {...sp} stroke={color}>
       <Path d="M12 3C8.13 3 5 6.13 5 10c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
       <Circle cx="12" cy="10" r="3" />
+    </G>
+  );
+}
+
+function MapPinOff({ color, strokeWidth }: IconComponentProps) {
+  const sp = strokeProps(strokeWidth);
+  return (
+    <G fill="none" {...sp} stroke={color}>
+      <Path d="M12 3C8.13 3 5 6.13 5 10c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+      <Circle cx="12" cy="10" r="3" />
+      <Line x1="3" y1="3" x2="21" y2="21" />
     </G>
   );
 }
@@ -243,6 +262,17 @@ function ArrowRight({ color, strokeWidth }: IconComponentProps) {
   );
 }
 
+function ArrowUp({ color, strokeWidth }: IconComponentProps) {
+  const sp = strokeProps(strokeWidth);
+  return (
+    <G fill="none" {...sp} stroke={color}>
+      <Circle cx="12" cy="12" r="10" />
+      <Line x1="12" y1="15.5" x2="12" y2="8.5" />
+      <Path d="M8.5 12 L12 8.5 L15.5 12" />
+    </G>
+  );
+}
+
 function Play({ color, strokeWidth }: IconComponentProps) {
   const sp = strokeProps(strokeWidth);
   return (
@@ -287,8 +317,8 @@ function Crown({ color, strokeWidth }: IconComponentProps) {
   const sp = strokeProps(strokeWidth);
   return (
     <G fill="none" {...sp} stroke={color}>
-      <Path d="M2 19l3-14 5 6 4-6 5 6 3-6 1 14z" />
-      <Line x1="2" y1="19" x2="22" y2="19" />
+      <Path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z" />
+      <Path d="M5 21h14" />
     </G>
   );
 }
@@ -358,6 +388,24 @@ function ChevronLeft({ color, strokeWidth }: IconComponentProps) {
   return (
     <G fill="none" {...sp} stroke={color}>
       <Path d="M15 18l-6-6 6-6" />
+    </G>
+  );
+}
+
+function ChevronRight({ color, strokeWidth }: IconComponentProps) {
+  const sp = strokeProps(strokeWidth);
+  return (
+    <G fill="none" {...sp} stroke={color}>
+      <Path d="M9 18l6-6-6-6" />
+    </G>
+  );
+}
+
+function ChevronDown({ color, strokeWidth }: IconComponentProps) {
+  const sp = strokeProps(strokeWidth);
+  return (
+    <G fill="none" {...sp} stroke={color}>
+      <Path d="M6 9l6 6 6-6" />
     </G>
   );
 }
@@ -440,10 +488,56 @@ function Check({ color, strokeWidth }: IconComponentProps) {
   );
 }
 
+function Eye({ color, strokeWidth }: IconComponentProps) {
+  const sp = strokeProps(strokeWidth);
+  return (
+    <G fill="none" {...sp} stroke={color}>
+      <Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <Circle cx="12" cy="12" r="3" />
+    </G>
+  );
+}
+
+function EyeOff({ color, strokeWidth }: IconComponentProps) {
+  const sp = strokeProps(strokeWidth);
+  return (
+    <G fill="none" {...sp} stroke={color}>
+      <Path d="M17.94 17.94A10.94 10.94 0 0112 20c-7 0-11-8-11-8a21.85 21.85 0 015.06-6.06" />
+      <Path d="M9.9 4.24A10.94 10.94 0 0112 4c7 0 11 8 11 8a21.77 21.77 0 01-3.22 4.44" />
+      <Path d="M14.12 14.12a3 3 0 11-4.24-4.24" />
+      <Line x1="1" y1="1" x2="23" y2="23" />
+    </G>
+  );
+}
+
+function Ruler({ color, strokeWidth }: IconComponentProps) {
+  const sp = strokeProps(strokeWidth);
+  return (
+    <G fill="none" {...sp} stroke={color}>
+      <Path d="M3 8.5 8.5 3l12.5 12.5L16 21z" />
+      <Path d="M7.5 8 9 6.5" />
+      <Path d="M10.5 11 12 9.5" />
+      <Path d="M13.5 14 15 12.5" />
+      <Path d="M16.5 17 18 15.5" />
+    </G>
+  );
+}
+
+function Search({ color, strokeWidth }: IconComponentProps) {
+  const sp = strokeProps(strokeWidth);
+  return (
+    <G fill="none" {...sp} stroke={color}>
+      <Circle cx="11" cy="11" r="7" />
+      <Path d="M21 21l-4.35-4.35" />
+    </G>
+  );
+}
+
 const ICON_MAP: Record<IconName, React.ComponentType<IconComponentProps>> = {
   dumbbell: Dumbbell,
   clock: Clock,
   mapPin: MapPin,
+  mapPinOff: MapPinOff,
   calendar: Calendar,
   calendarDate: CalendarDate,
   lightning: Lightning,
@@ -455,6 +549,7 @@ const ICON_MAP: Record<IconName, React.ComponentType<IconComponentProps>> = {
   moon: Moon,
   sun: Sun,
   arrowRight: ArrowRight,
+  arrowUp: ArrowUp,
   play: Play,
   plusCircle: PlusCircle,
   mail: Mail,
@@ -467,6 +562,8 @@ const ICON_MAP: Record<IconName, React.ComponentType<IconComponentProps>> = {
   logOut: LogOut,
   bell: Bell,
   chevronLeft: ChevronLeft,
+  chevronRight: ChevronRight,
+  chevronDown: ChevronDown,
   music: Music,
   image: Image,
   camera: Camera,
@@ -474,6 +571,10 @@ const ICON_MAP: Record<IconName, React.ComponentType<IconComponentProps>> = {
   checkCircle: CheckCircle,
   check: Check,
   calendarEmpty: CalendarEmpty,
+  eye: Eye,
+  eyeOff: EyeOff,
+  ruler: Ruler,
+  search: Search,
 };
 
 export default function AppIcon({ name, size = DEFAULT_SIZE, color = "#1C1C1E", strokeWidth, dateNumber }: AppIconProps) {

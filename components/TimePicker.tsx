@@ -24,17 +24,13 @@ type TimePickerProps = {
   onSelectTime: (time: string) => void;
 };
 
-// Preset times in 24h format
-const PRESET_MORNING = ["06:00", "06:30", "07:00"];
-const PRESET_EVENING = ["17:30", "18:00", "18:30"];
-
-// Convert 24h to display format (e.g., "06:30" → "6:30 AM")
-function toDisplay(time24: string): string {
-  const [h, m] = time24.split(":").map(Number);
-  const period = h < 12 ? "AM" : "PM";
-  const hour = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${hour}:${String(m).padStart(2, "0")} ${period}`;
-}
+// Preset quick-pick times, 24h value paired with its plain (no AM/PM) label.
+const PRESET_TIMES: { value: string; label: string }[] = [
+  { value: "17:30", label: "5:30" },
+  { value: "06:00", label: "6:00" },
+  { value: "18:00", label: "18:00" },
+  { value: "18:30", label: "18:30" },
+];
 
 // Custom picker data
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
@@ -128,7 +124,8 @@ function WheelColumn({
           left: 0,
           right: 0,
           height: ITEM_HEIGHT,
-          backgroundColor: "rgba(44,62,91,0.06)",
+          borderWidth: 1.5,
+          borderColor: colors.primary,
           borderRadius: 8,
           zIndex: 1,
         }}
@@ -209,36 +206,23 @@ export default function TimePicker({
 
   return (
     <View>
-      {/* ===== PRESET: MORNING ===== */}
-      <Text
-        style={{
-          fontSize: 12,
-          fontWeight: "500",
-          color: colors.textSecondary,
-          letterSpacing: 0.5,
-          marginTop: 4,
-          marginBottom: 10,
-          textTransform: "uppercase",
-        }}
-      >
-        Morning
-      </Text>
+      {/* ===== PRESET TIMES (single row) ===== */}
       <View
         style={{
           flexDirection: "row",
-          flexWrap: "wrap",
           gap: 8,
-          marginBottom: 18,
+          marginBottom: 10,
         }}
       >
-        {PRESET_MORNING.map((time) => {
-          const isSelected = selectedTime === time;
+        {PRESET_TIMES.map(({ value, label }) => {
+          const isSelected = selectedTime === value;
           return (
             <Pressable
-              key={time}
-              onPress={() => handlePresetSelect(time)}
+              key={value}
+              onPress={() => handlePresetSelect(value)}
               style={({ pressed }) => ({
-                paddingHorizontal: 18,
+                flex: 1,
+                alignItems: "center",
                 paddingVertical: 10,
                 borderRadius: 20,
                 backgroundColor: isSelected ? colors.primary : colors.surface,
@@ -253,78 +237,14 @@ export default function TimePicker({
                   color: isSelected ? colors.onPrimary : colors.textPrimary,
                 }}
               >
-                {toDisplay(time)}
+                {label}
               </Text>
             </Pressable>
           );
         })}
       </View>
 
-      {/* ===== PRESET: AFTERNOON / EVENING ===== */}
-      <Text
-        style={{
-          fontSize: 12,
-          fontWeight: "500",
-          color: colors.textSecondary,
-          letterSpacing: 0.5,
-          marginTop: 8,
-          marginBottom: 10,
-          textTransform: "uppercase",
-        }}
-      >
-        Afternoon / Evening
-      </Text>
-      <View
-        style={{
-          flexDirection: "row",
-          flexWrap: "wrap",
-          gap: 8,
-          marginBottom: 20,
-        }}
-      >
-        {PRESET_EVENING.map((time) => {
-          const isSelected = selectedTime === time;
-          return (
-            <Pressable
-              key={time}
-              onPress={() => handlePresetSelect(time)}
-              style={({ pressed }) => ({
-                paddingHorizontal: 18,
-                paddingVertical: 10,
-                borderRadius: 20,
-                backgroundColor: isSelected ? colors.primary : colors.surface,
-                opacity: pressed ? 0.7 : 1,
-                transform: [{ scale: pressed ? 0.95 : 1 }],
-              })}
-            >
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: isSelected ? "700" : "500",
-                  color: isSelected ? colors.onPrimary : colors.textPrimary,
-                }}
-              >
-                {toDisplay(time)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {/* ===== CUSTOM TIME ===== */}
-      <Text
-        style={{
-          fontSize: 12,
-          fontWeight: "500",
-          color: colors.textSecondary,
-          letterSpacing: 0.5,
-          marginTop: 8,
-          marginBottom: 10,
-          textTransform: "uppercase",
-        }}
-      >
-        Custom Time
-      </Text>
+      {/* Custom time button sits directly under the presets, as one block */}
       <Pressable
         onPress={openPicker}
         style={({ pressed }) => ({

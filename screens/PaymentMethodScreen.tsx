@@ -94,17 +94,20 @@ export default function PaymentMethodScreen() {
         >
           {/* Full Name */}
           <View className="mb-4">
-            <Text
-              className="mb-1.5"
-              style={[Typography.overline, { color: colors.textSecondary }]}
-            >
-              Full Name
-            </Text>
+            <View className="flex-row items-center gap-1.5 mb-1.5">
+              <View style={{ marginTop: -1.5 }}>
+                <AppIcon name="user" size={14} color={colors.primary} strokeWidth={2} />
+              </View>
+              <Text style={[Typography.overline, { color: colors.textSecondary }]}>
+                Full Name
+              </Text>
+            </View>
             <TextInput
               value={fullName}
               onChangeText={setFullName}
               placeholder="Full Name"
               placeholderTextColor={colors.textSecondary}
+              keyboardAppearance="light"
               className="rounded-xl py-3 px-4"
               style={[Typography.body, { backgroundColor: isDark ? colors.surfaceMuted : colors.surface, color: colors.textPrimary, borderWidth: isDark ? 0 : 1, borderColor: colors.border }]}
             />
@@ -112,35 +115,39 @@ export default function PaymentMethodScreen() {
 
           {/* Country */}
           <View className="mb-4">
-            <Text
-              className="mb-1.5"
-              style={[Typography.overline, { color: colors.textSecondary }]}
-            >
-              Country
-            </Text>
+            <View className="flex-row items-center gap-1.5 mb-1.5">
+              <AppIcon name="globe" size={14} color={colors.primary} strokeWidth={2} />
+              <Text style={[Typography.overline, { color: colors.textSecondary }]}>
+                Country
+              </Text>
+            </View>
             <TextInput
               value={country}
               onChangeText={setCountry}
               placeholder="Country"
               placeholderTextColor={colors.textSecondary}
+              keyboardAppearance="light"
               className="rounded-xl py-3 px-4"
               style={[Typography.body, { backgroundColor: isDark ? colors.surfaceMuted : colors.surface, color: colors.textPrimary, borderWidth: isDark ? 0 : 1, borderColor: colors.border }]}
             />
           </View>
 
-          {/* Address Line 1 */}
+          {/* Address */}
           <View>
-            <Text
-              className="mb-1.5"
-              style={[Typography.overline, { color: colors.textSecondary }]}
-            >
-              Address Line 1
-            </Text>
+            <View className="flex-row items-center gap-1.5 mb-1.5">
+              <View style={{ marginTop: -1.5 }}>
+                <AppIcon name="mapPin" size={14} color={colors.primary} strokeWidth={2} />
+              </View>
+              <Text style={[Typography.overline, { color: colors.textSecondary }]}>
+                Address
+              </Text>
+            </View>
             <TextInput
               value={address}
               onChangeText={setAddress}
               placeholder="Enter your address"
               placeholderTextColor={colors.textSecondary}
+              keyboardAppearance="light"
               className="rounded-xl py-3 px-4"
               style={[Typography.body, { backgroundColor: isDark ? colors.surfaceMuted : colors.surface, color: colors.textPrimary, borderWidth: isDark ? 0 : 1, borderColor: colors.border }]}
             />
@@ -171,18 +178,19 @@ export default function PaymentMethodScreen() {
         >
           {/* Card Number */}
           <View className="mb-4">
-            <Text
-              className="mb-1.5"
-              style={[Typography.overline, { color: colors.textSecondary }]}
-            >
-              Card Number
-            </Text>
+            <View className="flex-row items-center gap-1.5 mb-1.5">
+              <AppIcon name="creditCard" size={14} color={colors.primary} strokeWidth={2} />
+              <Text style={[Typography.overline, { color: colors.textSecondary }]}>
+                Card Number
+              </Text>
+            </View>
             <View style={{ justifyContent: "center" }}>
               <TextInput
                 value={cardNumber}
                 onChangeText={setCardNumber}
                 placeholder="0000 0000 0000 0000"
                 placeholderTextColor={colors.textSecondary}
+                keyboardAppearance="light"
                 keyboardType="number-pad"
                 className="rounded-xl py-3 pl-4"
                 style={[
@@ -205,34 +213,36 @@ export default function PaymentMethodScreen() {
           {/* Expiration Date & Security Code */}
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <Text
-                className="mb-1.5"
-                style={[Typography.overline, { color: colors.textSecondary }]}
-              >
-                Expiration Date
-              </Text>
+              <View className="flex-row items-center gap-1.5 mb-1.5">
+                <AppIcon name="calendar" size={14} color={colors.primary} strokeWidth={2} />
+                <Text style={[Typography.overline, { color: colors.textSecondary }]}>
+                  Expiration Date
+                </Text>
+              </View>
               <TextInput
                 value={expDate}
                 onChangeText={setExpDate}
                 placeholder="MM/YY"
                 placeholderTextColor={colors.textSecondary}
+                keyboardAppearance="light"
                 className="rounded-xl py-3 px-4"
                 style={[Typography.body, { backgroundColor: isDark ? colors.surfaceMuted : colors.surface, color: colors.textPrimary, borderWidth: isDark ? 0 : 1, borderColor: colors.border }]}
               />
             </View>
 
             <View className="flex-1">
-              <Text
-                className="mb-1.5"
-                style={[Typography.overline, { color: colors.textSecondary }]}
-              >
-                Security Code
-              </Text>
+              <View className="flex-row items-center gap-1.5 mb-1.5">
+                <AppIcon name="lock" size={14} color={colors.primary} strokeWidth={2} />
+                <Text style={[Typography.overline, { color: colors.textSecondary }]}>
+                  Security Code
+                </Text>
+              </View>
               <TextInput
                 value={secCode}
                 onChangeText={setSecCode}
                 placeholder="CVC"
                 placeholderTextColor={colors.textSecondary}
+                keyboardAppearance="light"
                 keyboardType="number-pad"
                 secureTextEntry
                 className="rounded-xl py-3 px-4"

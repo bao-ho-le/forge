@@ -80,22 +80,43 @@ export default function SubscriptionPlanScreen() {
         </View>
 
         {/* Current Plan Badge */}
-        <View className="flex-row items-center gap-2 mb-5 px-1">
-          <AppIcon
-            name="crown"
-            size={IconSize.sm}
-            color={colors.premium}
-            strokeWidth={2}
-          />
-          <Text style={[Typography.overline, { color: colors.textSecondary }]}>
-            {t("currentPlan")}: {t("premium")}
+        <View className="flex-row items-center gap-2 mb-5 px-0.5">
+          <Text
+            style={[
+              Typography.overline,
+              { color: colors.textSecondary, letterSpacing: 1.2 },
+            ]}
+          >
+            {t("currentPlan").toUpperCase()}:
           </Text>
+          <View
+            className="flex-row items-center gap-1 px-3 py-1 rounded-xl"
+            style={{
+              backgroundColor: colors.premiumContainer,
+              borderWidth: 1,
+              borderColor: colors.premium,
+            }}
+          >
+            <AppIcon
+              name="crown"
+              size={IconSize.sm}
+              color={colors.premium}
+              strokeWidth={2}
+            />
+            <Text
+              style={[
+                Typography.overline,
+                { color: colors.premium, letterSpacing: 0.3 },
+              ]}
+            >
+              {t("premium")}
+            </Text>
+          </View>
         </View>
 
         {/* Plan Cards */}
         {PLANS.map((plan) => {
           const isSelected = selectedPlan === plan.id;
-          const isCurrent = plan.id === "premium";
 
           return (
             <Pressable
@@ -124,18 +145,6 @@ export default function SubscriptionPlanScreen() {
                     >
                       {t(plan.nameKey)}
                     </Text>
-                    {isCurrent && (
-                      <View
-                        className="px-2 py-0.5 rounded-lg"
-                        style={{ backgroundColor: colors.premiumContainer }}
-                      >
-                        <Text
-                          style={[Typography.overline, { color: colors.premium }]}
-                        >
-                          Current
-                        </Text>
-                      </View>
-                    )}
                   </View>
                   <Text
                     className="mt-2"

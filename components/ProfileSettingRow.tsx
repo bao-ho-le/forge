@@ -83,12 +83,14 @@ export default function ProfileSettingRow({
 
       {/* Arrow */}
       {showArrow && (
-        <Text
-          className="ml-1 mt-[-2px]"
-          style={[Typography.title, { color: colors.border }]}
-        >
-          {"›"}
-        </Text>
+        <View className="ml-1">
+          <AppIcon
+            name="chevronRight"
+            size={IconSize.sm}
+            color={colors.border}
+            strokeWidth={3}
+          />
+        </View>
       )}
     </View>
   );

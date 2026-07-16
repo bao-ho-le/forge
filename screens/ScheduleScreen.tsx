@@ -1,64 +1,101 @@
-import React, { useState } from "react";
-import { View, Text, ScrollView, StatusBar, Pressable } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { View, Text, ScrollView, StatusBar } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useTranslation } from "../components/Localization/LanguageProvider";
 import { Typography } from "../constants/typography";
-import { IconSize } from "../constants/iconSizes";
-import WeekSelector, { DAYS } from "../components/WeekSelector";
-import WorkoutScheduleCard from "../components/WorkoutScheduleCard";
+import DayScheduleCard from "../components/DayScheduleCard";
+import DayEditSheet from "../components/DayEditSheet";
+import ScheduleCardSkeleton from "../components/Skeleton/ScheduleCardSkeleton";
 import { TAB_BAR_HEIGHT } from "../constants/tabNavigation";
-import AddWorkoutModal from "../components/AddWorkoutModal";
-import AppIcon from "../components/Icon/AppIcon";
+import {
+  fetchActiveSchedules,
+  fetchGyms,
+  generateUpcomingSessions,
+  getTodayDayOfWeek,
+  type WorkoutSchedule,
+  type Gym,
+} from "../lib/scheduleService";
+import { getCached, setCached } from "../lib/dataCache";
 
-// Mock data: workouts keyed by day index
-const MOCK_WORKOUTS: Record<
-  number,
-  { name: string; time: string; location: string }[]
-> = {
-  0: [{ name: "Chest Day", time: "07:00", location: "Iron Temple Gym" }],
-  2: [{ name: "Upper Body", time: "06:30", location: "Iron Temple Gym" }],
-  4: [{ name: "Leg Day", time: "06:00", location: "Iron Temple Gym" }],
+// Rolling week starting from a given weekday, e.g. startDay=4 -> [4,5,6,0,1,2,3].
+function rollingWeek(startDay: number): number[] {
+  return Array.from({ length: 7 }, (_, i) => (startDay + i) % 7);
+}
+
+// Keep in sync with HomeScreen's CACHE_TTL_MS: any schedule edit clears both
+// via invalidateCache(), so the two only need to agree on the "too long, go
+// refetch" window for plain tab-switch navigation.
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+// Placeholder count while loading, independent of the real (always 7-day)
+// rolling week list.
+const SKELETON_CARD_COUNT = 5;
+
+type ScheduleCacheData = {
+  schedules: WorkoutSchedule[];
+  gyms: Gym[];
+  today: number;
 };
 
 export default function ScheduleScreen() {
   const { colors, isDark } = useTheme();
+  const { t } = useTranslation();
+  const { session } = useAuth();
+  const userId = session?.user?.id;
   const insets = useSafeAreaInsets();
-  const today = new Date().getDay();
-  const mappedToday = today === 0 ? 6 : today - 1; // Convert Sun=0 to index 6
-  const [selectedDay, setSelectedDay] = useState(mappedToday);
-  const [showModal, setShowModal] = useState(false);
-  const [workouts, setWorkouts] = useState(MOCK_WORKOUTS);
 
-  const scale = useSharedValue(1);
-  const addButtonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const [schedulesByDay, setSchedulesByDay] = useState<Map<number, WorkoutSchedule>>(
+    new Map(),
+  );
+  const [gyms, setGyms] = useState<Gym[]>([]);
+  const [todayDayOfWeek, setTodayDayOfWeek] = useState<number | null>(null);
+  const [sheetDay, setSheetDay] = useState<number | null>(null);
+  // Lazily seeded from the cache so a cache hit never flashes a skeleton on
+  // the first paint - only a genuine network fetch flips this to true.
+  const [loading, setLoading] = useState(() =>
+    userId ? getCached<ScheduleCacheData>(`schedule:${userId}`, CACHE_TTL_MS) === null : true,
+  );
 
-  const dayWorkouts = workouts[selectedDay] || [];
+  const loadData = useCallback(async () => {
+    if (!userId) return;
+    const cacheKey = `schedule:${userId}`;
+    const cached = getCached<ScheduleCacheData>(cacheKey, CACHE_TTL_MS);
+    if (cached) {
+      setSchedulesByDay(new Map(cached.schedules.map((s) => [s.day_of_week, s])));
+      setGyms(cached.gyms);
+      setTodayDayOfWeek(cached.today);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      await generateUpcomingSessions(userId);
+    } catch (err) {
+      console.error("generateUpcomingSessions failed", err);
+    }
+    const [scheduleList, gymList, today] = await Promise.all([
+      fetchActiveSchedules(userId),
+      fetchGyms(userId),
+      getTodayDayOfWeek(userId),
+    ]);
+    setSchedulesByDay(new Map(scheduleList.map((s) => [s.day_of_week, s])));
+    setGyms(gymList);
+    setTodayDayOfWeek(today);
+    setCached<ScheduleCacheData>(cacheKey, { schedules: scheduleList, gyms: gymList, today });
+    setLoading(false);
+  }, [userId]);
 
-  const handleAddWorkout = (workout: {
-    title: string;
-    day: number;
-    time: string;
-    location: string;
-  }) => {
-    setWorkouts((prev) => {
-      const updated = { ...prev };
-      const list = [...(updated[workout.day] || [])];
-      list.push({
-        name: workout.title,
-        time: workout.time,
-        location: workout.location,
-      });
-      updated[workout.day] = list;
-      return updated;
-    });
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const sheetSchedule = sheetDay !== null ? schedulesByDay.get(sheetDay) ?? null : null;
+  const weekDays = useMemo(
+    () => rollingWeek(todayDayOfWeek ?? 0),
+    [todayDayOfWeek],
+  );
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -84,123 +121,42 @@ export default function ScheduleScreen() {
               { color: colors.textPrimary, letterSpacing: -0.5 },
             ]}
           >
-            Schedule
+            {t("schedule")}
           </Text>
         </View>
 
-        {/* ===== WEEK SELECTOR ===== */}
-        <View className="mb-6">
-          <WeekSelector
-            selectedDay={selectedDay}
-            onSelectDay={setSelectedDay}
-          />
-        </View>
-
-        {/* ===== WORKOUT LIST ===== */}
-        {dayWorkouts.length > 0 ? (
-          <View>
-            <Text
-              className="mb-3.5"
-              style={[
-                Typography.overline,
-                { color: colors.textSecondary, letterSpacing: 1.2 },
-              ]}
-            >
-              {DAYS[selectedDay].toUpperCase()}
-            </Text>
-            {dayWorkouts.map((workout, index) => (
-              <WorkoutScheduleCard
-                key={workout.name + index}
-                name={workout.name}
-                time={workout.time}
-                location={workout.location}
+        {/* ===== WEEKLY ROUTINE (always 7 days, rolling from today) ===== */}
+        {loading
+          ? Array.from({ length: SKELETON_CARD_COUNT }).map((_, index) => (
+              <ScheduleCardSkeleton key={index} />
+            ))
+          : weekDays.map((dayOfWeek) => (
+              <DayScheduleCard
+                key={dayOfWeek}
+                dayOfWeek={dayOfWeek}
+                schedule={schedulesByDay.get(dayOfWeek) ?? null}
+                isToday={todayDayOfWeek === dayOfWeek}
+                onPress={() => setSheetDay(dayOfWeek)}
               />
             ))}
-          </View>
-        ) : (
-          <Animated.View
-            className="rounded-[20px] p-8 items-center justify-center"
-            style={{
-              backgroundColor: colors.surface,
-              shadowColor: isDark ? "#000" : "#2C3E5B",
-              shadowOffset: { width: 0, height: 3 },
-              shadowOpacity: isDark ? 0.25 : 0.06,
-              shadowRadius: 8,
-              elevation: 3,
-            }}
-          >
-            <View
-              className="w-16 h-16 rounded-full justify-center items-center mb-4"
-              style={{ backgroundColor: colors.primaryContainer }}
-            >
-              <AppIcon
-                name="calendarEmpty"
-                size={IconSize.xl}
-                color={colors.textSecondary}
-                strokeWidth={1.5}
-              />
-            </View>
-            <Text
-              className="text-center"
-              style={[Typography.bodyLarge, { color: colors.textSecondary }]}
-            >
-              No workout scheduled
-            </Text>
-            <Text
-              className="text-center mt-1"
-              style={[Typography.label, { color: colors.textSecondary }]}
-            >
-              Tap the button below to add one
-            </Text>
-          </Animated.View>
-        )}
-
-        {/* ===== ADD WORKOUT BUTTON ===== */}
-        <Animated.View style={[addButtonStyle, { marginTop: 20 }]}>
-          <Pressable
-            onPress={() => setShowModal(true)}
-            onPressIn={() => {
-              scale.value = withTiming(0.95, { duration: 80 });
-            }}
-            onPressOut={() => {
-              scale.value = withTiming(1, { duration: 120 });
-            }}
-            style={({ pressed }) => ({
-              paddingVertical: 16,
-              borderRadius: 16,
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "row",
-              gap: 8,
-              backgroundColor: colors.primary,
-              opacity: pressed ? 0.9 : 1,
-            })}
-          >
-            <Text
-              className="mt-[-1px]"
-              style={[Typography.body, { color: colors.onPrimary }]}
-            >
-              +
-            </Text>
-            <Text
-              style={[
-                Typography.bodyLarge,
-                { color: colors.onPrimary, letterSpacing: 0.5 },
-              ]}
-            >
-              Add Workout
-            </Text>
-          </Pressable>
-        </Animated.View>
       </ScrollView>
 
-      {/* ===== ADD WORKOUT MODAL ===== */}
-      <AddWorkoutModal
-        visible={showModal}
-        defaultDay={selectedDay}
-        onClose={() => setShowModal(false)}
-        onAdd={handleAddWorkout}
-      />
+      {/* ===== DAY EDIT BOTTOM SHEET =====
+          Always mounted (not gated on sheetDay !== null) so the sheet's own
+          `visible` transition drives its backdrop fade-out animation instead
+          of the whole component vanishing from the tree mid-animation. */}
+      {userId && (
+        <DayEditSheet
+          visible={sheetDay !== null}
+          userId={userId}
+          dayOfWeek={sheetDay ?? 0}
+          gyms={gyms}
+          existingSchedule={sheetSchedule}
+          schedulesByDay={schedulesByDay}
+          onClose={() => setSheetDay(null)}
+          onSaved={loadData}
+        />
+      )}
     </View>
   );
 }

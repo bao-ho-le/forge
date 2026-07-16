@@ -6,38 +6,54 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "../components/Localization/LanguageProvider";
 import { Typography } from "../constants/typography";
 import { IconSize } from "../constants/iconSizes";
-import AppIcon, { type IconName } from "../components/Icon/AppIcon";
+import AppIcon from "../components/Icon/AppIcon";
 import ThemedSwitch from "../components/ThemedSwitch";
+import AddAppsSheet, { type MockApp } from "../components/AddAppsSheet";
 
-const AVAILABLE_APPS: { name: string; icon: IconName }[] = [
-  { name: "TikTok", icon: "music" },
-  { name: "Instagram", icon: "image" },
-  { name: "YouTube", icon: "play" },
-  { name: "Games", icon: "gameController" },
-  { name: "Netflix", icon: "play" },
-  { name: "Twitter", icon: "music" },
-  { name: "Snapchat", icon: "image" },
-  { name: "Reddit", icon: "music" },
+const APPS_CATALOG: MockApp[] = [
+  { name: "TikTok", initial: "T" },
+  { name: "Instagram", initial: "I" },
+  { name: "YouTube", initial: "Y" },
+  { name: "Facebook", initial: "F" },
+  { name: "Messenger", initial: "M" },
+  { name: "Discord", initial: "D" },
+  { name: "Reddit", initial: "R" },
+  { name: "Netflix", initial: "N" },
+  { name: "Spotify", initial: "S" },
+  { name: "X (Twitter)", initial: "X" },
 ];
+
+const DEFAULT_ADDED_APPS = ["TikTok", "Instagram", "YouTube"];
 
 export default function LockedAppsScreen() {
   const { colors, isDark } = useTheme();
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const [lockedApps, setLockedApps] = useState<Set<string>>(
-    new Set(["TikTok", "Instagram", "YouTube", "Games"])
-  );
 
-  const toggleApp = (name: string) => {
-    setLockedApps((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) {
-        next.delete(name);
-      } else {
-        next.add(name);
-      }
+  const [addedApps, setAddedApps] = useState<string[]>(DEFAULT_ADDED_APPS);
+  const [enabledMap, setEnabledMap] = useState<Record<string, boolean>>(
+    Object.fromEntries(DEFAULT_ADDED_APPS.map((name) => [name, true])),
+  );
+  const [sheetVisible, setSheetVisible] = useState(false);
+
+  const addedSet = new Set(addedApps);
+
+  const addApp = (name: string) => {
+    setAddedApps((prev) => (prev.includes(name) ? prev : [...prev, name]));
+    setEnabledMap((prev) => ({ ...prev, [name]: true }));
+  };
+
+  const removeApp = (name: string) => {
+    setAddedApps((prev) => prev.filter((app) => app !== name));
+    setEnabledMap((prev) => {
+      const next = { ...prev };
+      delete next[name];
       return next;
     });
+  };
+
+  const toggleApp = (name: string) => {
+    setEnabledMap((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
   return (
@@ -101,12 +117,13 @@ export default function LockedAppsScreen() {
             elevation: 2,
           }}
         >
-          {AVAILABLE_APPS.map((app, index) => {
-            const isLocked = lockedApps.has(app.name);
-            const isLast = index === AVAILABLE_APPS.length - 1;
+          {addedApps.map((name, index) => {
+            const app = APPS_CATALOG.find((a) => a.name === name);
+            const isEnabled = !!enabledMap[name];
+            const isLast = index === addedApps.length - 1;
             return (
               <View
-                key={app.name}
+                key={name}
                 className="flex-row items-center py-3.5 px-4"
                 style={{
                   borderBottomWidth: isLast ? 0 : 1,
@@ -116,33 +133,90 @@ export default function LockedAppsScreen() {
                 <View
                   className="w-9 h-9 rounded-[10px] justify-center items-center mr-3.5"
                   style={{
-                    backgroundColor: isLocked
+                    backgroundColor: isEnabled
                       ? colors.primaryContainer
                       : colors.surfaceMuted,
                   }}
                 >
-                  <AppIcon
-                    name={app.icon}
-                    size={IconSize.sm}
-                    color={isLocked ? colors.primary : colors.textSecondary}
-                    strokeWidth={1.8}
-                  />
+                  <Text
+                    style={[
+                      Typography.label,
+                      {
+                        color: isEnabled ? colors.primary : colors.textSecondary,
+                        fontWeight: "700",
+                      },
+                    ]}
+                  >
+                    {app?.initial ?? name.charAt(0).toUpperCase()}
+                  </Text>
                 </View>
                 <Text
                   className="flex-1"
                   style={[Typography.body, { color: colors.textPrimary }]}
                 >
-                  {app.name}
+                  {name}
                 </Text>
-                <ThemedSwitch
-                  value={isLocked}
-                  onValueChange={() => toggleApp(app.name)}
-                />
+                <Pressable
+                  onPress={() => removeApp(name)}
+                  style={({ pressed }) => ({
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 4,
+                    marginRight: 12,
+                    paddingHorizontal: 14,
+                    paddingVertical: 7,
+                    borderRadius: 9999,
+                    borderWidth: 1.5,
+                    borderColor: colors.border,
+                    opacity: pressed ? 0.6 : 1,
+                  })}
+                >
+                  <Text
+                    style={[
+                      Typography.label,
+                      { color: colors.textSecondary, fontWeight: "700" },
+                    ]}
+                  >
+                    ✕ {t("removeAction")}
+                  </Text>
+                </Pressable>
+                <ThemedSwitch value={isEnabled} onValueChange={() => toggleApp(name)} />
               </View>
             );
           })}
         </View>
+
+        {/* Add Apps Button */}
+        <Pressable
+          onPress={() => setSheetVisible(true)}
+          style={({ pressed }) => ({
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 8,
+            marginTop: 16,
+            paddingVertical: 16,
+            borderRadius: 16,
+            backgroundColor: colors.primary,
+            opacity: pressed ? 0.85 : 1,
+            transform: [{ scale: pressed ? 0.97 : 1 }],
+          })}
+        >
+          <AppIcon name="plusCircle" size={IconSize.sm} color={colors.onPrimary} strokeWidth={2} />
+          <Text style={[Typography.bodyLarge, { color: colors.onPrimary, letterSpacing: 0.3 }]}>
+            {t("addApps")}
+          </Text>
+        </Pressable>
       </View>
+
+      <AddAppsSheet
+        visible={sheetVisible}
+        catalog={APPS_CATALOG}
+        addedApps={addedSet}
+        onAdd={addApp}
+        onRemove={removeApp}
+        onClose={() => setSheetVisible(false)}
+      />
     </View>
   );
 }

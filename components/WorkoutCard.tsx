@@ -14,7 +14,7 @@ import AppIcon from "./Icon/AppIcon";
 
 type WorkoutCardProps = {
   name: string;
-  status: string;
+  status?: string;
   time: string;
   location: string;
 };
@@ -94,14 +94,16 @@ export default function WorkoutCard({
         </View>
 
         {/* Status Badge */}
-        <View
-          className="px-3 py-[5px] rounded-[20px]"
-          style={{ backgroundColor: colors.infoContainer }}
-        >
-          <Text style={[Typography.overline, { color: colors.info }]}>
-            {status}
-          </Text>
-        </View>
+        {status && (
+          <View
+            className="px-3 py-[5px] rounded-[20px]"
+            style={{ backgroundColor: colors.infoContainer }}
+          >
+            <Text style={[Typography.overline, { color: colors.info }]}>
+              {status}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Second Row: Info */}

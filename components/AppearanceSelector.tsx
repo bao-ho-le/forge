@@ -56,7 +56,7 @@ export default function AppearanceSelector() {
                 key={mode}
                 onPress={() => setTheme(mode)}
                 style={({ pressed }) => ({
-                  paddingHorizontal: 16,
+                  paddingHorizontal: 12,
                   paddingVertical: 6,
                   borderRadius: 14,
                   backgroundColor: isActive ? colors.primary : "transparent",
