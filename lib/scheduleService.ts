@@ -20,12 +20,6 @@ export type WorkoutSchedule = {
   gyms: { name: string } | null;
 };
 
-export type UpcomingSessionPreview = {
-  id: string;
-  scheduled_date: string; // "YYYY-MM-DD"
-  title: string | null;
-};
-
 const DEFAULT_TIMEZONE = "Asia/Ho_Chi_Minh";
 const GENERATE_DAYS_AHEAD = 14;
 
@@ -265,29 +259,4 @@ export async function generateUpcomingSessions(userId: string): Promise<void> {
       ignoreDuplicates: true,
     });
   if (error) throw error;
-}
-
-export async function fetchUpcomingSessionsPreview(
-  userId: string,
-  limit = 3,
-): Promise<UpcomingSessionPreview[]> {
-  const timezone = await getUserTimezone(userId);
-  const today = getTodayInTimezone(timezone);
-  // 7-day window counting today as day 1 (today..today+6), so if today is
-  // Thursday the window ends next Wednesday — next Thursday never shows up
-  // next to a plain weekday label.
-  const weekAhead = addDays(today, 6);
-
-  const { data, error } = await supabase
-    .from("workout_sessions")
-    .select("id, scheduled_date, title")
-    .eq("user_id", userId)
-    .eq("status", "pending")
-    .gt("scheduled_date", today)
-    .lte("scheduled_date", weekAhead)
-    .order("scheduled_date", { ascending: true })
-    .order("scheduled_time", { ascending: true })
-    .limit(limit);
-  if (error) throw error;
-  return data ?? [];
 }

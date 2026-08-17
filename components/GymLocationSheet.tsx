@@ -9,6 +9,7 @@ import {
   Platform,
   Dimensions,
   Linking,
+  Alert,
   ActivityIndicator,
 } from "react-native";
 import Animated, {
@@ -23,8 +24,11 @@ import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "./Localization/LanguageProvider";
 import { Typography } from "../constants/typography";
 import AppIcon from "./Icon/AppIcon";
-import LocationInput from "./LocationInput";
-import { savePrimaryGym, type PrimaryGym } from "../lib/gymService";
+import LocationInput from "./LocationInput";import {
+  savePrimaryGym,
+  deletePrimaryGym,
+  type PrimaryGym,
+} from "../lib/gymService";
 
 const BACKDROP_FADE_MS = 200;
 const SHEET_SLIDE_MS = 300;
@@ -33,6 +37,25 @@ const SHEET_OFFSCREEN_Y = Dimensions.get("window").height;
 const MIN_RADIUS = 50;
 const MAX_RADIUS = 500;
 const RADIUS_STEP = 10;
+
+function calculateDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const R = 6371000;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
 
 type GymLocationSheetProps = {
   visible: boolean;
@@ -69,12 +92,15 @@ export default function GymLocationSheet({
   const [address, setAddress] = useState<string | null>(null);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
-  const [radiusMeters, setRadiusMeters] = useState(100);
+  const [radiusMeters, setRadiusMeters] = useState(50);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [locating, setLocating] = useState(false);
   const [showNameError, setShowNameError] = useState(false);
   const [showLocationError, setShowLocationError] = useState(false);
+  const [showRadiusSection, setShowRadiusSection] = useState(false);
+  const [sameLocationMessage, setSameLocationMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [modalVisible, setModalVisible] = useState(visible);
@@ -105,19 +131,22 @@ export default function GymLocationSheet({
 
   useEffect(() => {
     if (!visible) return;
-    setName(existingGym?.name ?? "");
+    setName(existingGym?.name ?? "My Gym");
     setAddress(existingGym?.address ?? null);
     setLatitude(existingGym?.latitude ?? null);
     setLongitude(existingGym?.longitude ?? null);
-    setRadiusMeters(existingGym?.radius_meters ?? 100);
+    setRadiusMeters(existingGym?.radius_meters ?? 50);
     setPermissionDenied(false);
     setShowNameError(false);
     setShowLocationError(false);
+    setShowRadiusSection(false);
+    setSameLocationMessage(null);
     setError(null);
   }, [visible, existingGym]);
 
   const handleUseCurrentLocation = async () => {
     setLocating(true);
+    setSameLocationMessage(null);
     try {
       const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
@@ -128,12 +157,41 @@ export default function GymLocationSheet({
       setPermissionDenied(false);
       setShowLocationError(false);
       const position = await Location.getCurrentPositionAsync({});
+      const newLat = position.coords.latitude;
+      const newLon = position.coords.longitude;
       const [place] = await Location.reverseGeocodeAsync({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
+        latitude: newLat,
+        longitude: newLon,
       });
-      setLatitude(position.coords.latitude);
-      setLongitude(position.coords.longitude);
+
+      if (existingGym) {
+        const distance = calculateDistance(
+          existingGym.latitude,
+          existingGym.longitude,
+          newLat,
+          newLon,
+        );
+
+        if (distance <= radiusMeters) {
+          setSameLocationMessage(t("sameLocationMessage"));
+          return;
+        }
+
+        const confirmed = await new Promise<boolean>((resolve) => {
+          Alert.alert(t("updateGymLocationTitle"), t("updateGymLocationMessage"), [
+            { text: t("cancel"), style: "cancel", onPress: () => resolve(false) },
+            {
+              text: t("update"),
+              onPress: () => resolve(true),
+            },
+          ]);
+        });
+
+        if (!confirmed) return;
+      }
+
+      setLatitude(newLat);
+      setLongitude(newLon);
       setAddress(place ? formatAddress(place) : null);
     } catch (err) {
       setError((err as Error).message);
@@ -147,6 +205,30 @@ export default function GymLocationSheet({
   };
   const increaseRadius = () => {
     setRadiusMeters((prev) => Math.min(MAX_RADIUS, prev + RADIUS_STEP));
+  };
+
+  const handleDelete = () => {
+    if (!existingGym) return;
+    Alert.alert(t("deleteGymTitle"), t("deleteGymMessage"), [
+      { text: t("cancel"), style: "cancel" },
+      {
+        text: t("delete"),
+        style: "destructive",
+        onPress: async () => {
+          setDeleting(true);
+          const result = await deletePrimaryGym(existingGym.id);
+          setDeleting(false);
+
+          if (result.error) {
+            setError(result.error.message);
+            return;
+          }
+
+          onSaved();
+          onClose();
+        },
+      },
+    ]);
   };
 
   const handleSave = async () => {
@@ -269,7 +351,6 @@ export default function GymLocationSheet({
                 </Pressable>
               </View>
 
-              <View style={{ flex: 1 }}>
               {/* Gym Name */}
               <View className="mb-7">
                 <View className="flex-row items-center gap-1.5 mb-3.5">
@@ -321,16 +402,12 @@ export default function GymLocationSheet({
                 >
                   {permissionDenied ? (
                     <Text
-                      className="mb-3"
                       style={[Typography.body, { color: colors.textPrimary }]}
                     >
                       {t("locationPermissionRequired")}
                     </Text>
                   ) : latitude !== null && longitude !== null ? (
-                    <Text
-                      className="mb-3"
-                      style={[Typography.body, { color: colors.textPrimary }]}
-                    >
+                    <Text style={[Typography.body, { color: colors.textPrimary }]}>
                       {address || t("noLocationSelected")}
                     </Text>
                   ) : (
@@ -341,50 +418,46 @@ export default function GymLocationSheet({
                       >
                         {t("noLocationSelected")}
                       </Text>
-                      <Text
-                        className="mb-3"
-                        style={[Typography.label, { color: colors.textSecondary }]}
-                      >
+                      <Text style={[Typography.label, { color: colors.textSecondary }]}>
                         {t("noLocationSelectedDesc")}
                       </Text>
                     </>
                   )}
-
-                  <Pressable
-                    onPress={handleUseCurrentLocation}
-                    disabled={locating}
-                    style={({ pressed }) => ({
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
-                      paddingVertical: 12,
-                      borderRadius: 14,
-                      backgroundColor: colors.primary,
-                      opacity: pressed || locating ? 0.8 : 1,
-                    })}
-                  >
-                    {locating ? (
-                      <ActivityIndicator color={colors.onPrimary} />
-                    ) : (
-                      <>
-                        <AppIcon
-                          name="mapPin"
-                          size={16}
-                          color={colors.onPrimary}
-                          strokeWidth={2}
-                        />
-                        <Text
-                          style={[Typography.bodyLarge, { color: colors.onPrimary }]}
-                        >
-                          {permissionDenied
-                            ? t("allowLocationAccess")
-                            : t("useCurrentLocation")}
-                        </Text>
-                      </>
-                    )}
-                  </Pressable>
+                  {sameLocationMessage && (
+                    <Text
+                      className="mt-2"
+                      style={[Typography.label, { color: colors.error }]}
+                    >
+                      {sameLocationMessage}
+                    </Text>
+                  )}
                 </View>
+
+                <Pressable
+                  onPress={handleUseCurrentLocation}
+                  disabled={locating}
+                  style={({ pressed }) => ({
+                    alignItems: "center",
+                    justifyContent: "center",
+                    paddingVertical: 12,
+                    borderRadius: 14,
+                    backgroundColor: colors.primary,
+                    opacity: pressed || locating ? 0.8 : 1,
+                    marginTop: 12,
+                  })}
+                >
+                  {locating ? (
+                    <ActivityIndicator color={colors.onPrimary} />
+                  ) : (
+                    <Text
+                      style={[Typography.bodyLarge, { color: colors.onPrimary }]}
+                    >
+                      {permissionDenied
+                        ? t("allowLocationAccess")
+                        : t("useCurrentLocation")}
+                    </Text>
+                  )}
+                </Pressable>
 
                 {showLocationError && (
                   <Text
@@ -397,39 +470,63 @@ export default function GymLocationSheet({
                 )}
               </View>
 
-              {/* Verification Radius */}
-              <View className="mb-7">
-                <View className="flex-row items-center gap-1.5 mb-3.5">
-                  <AppIcon name="ruler" size={14} color={colors.primary} strokeWidth={2} />
-                  <Text
-                    style={[
-                      Typography.overline,
-                      { color: colors.textSecondary, letterSpacing: 0.8 },
-                    ]}
-                  >
-                    {t("verificationRadiusLabel")}
-                  </Text>
-                </View>
-                <View
-                  className="flex-row items-center justify-center gap-6 rounded-2xl py-4"
-                  style={{ backgroundColor: colors.surface }}
+              {/* Verification Radius: collapsible, same pattern as Reminder
+                  in DayEditSheet (title press toggles the content, collapsed
+                  by default each time the sheet opens). */}
+              <Pressable
+                onPress={() => setShowRadiusSection((prev) => !prev)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                className="flex-row items-center gap-1.5 mb-3.5"
+              >
+                <AppIcon name="ruler" size={14} color={colors.primary} strokeWidth={2} />
+                <Text
+                  style={[
+                    Typography.overline,
+                    { color: colors.textSecondary, letterSpacing: 0.8 },
+                  ]}
                 >
-                  <Pressable onPress={decreaseRadius} style={circleButtonStyle}>
-                    <Text style={[Typography.title, { color: colors.textPrimary }]}>
-                      −
-                    </Text>
-                  </Pressable>
-                  <Text style={[Typography.title, { color: colors.primary }]}>
-                    {radiusMeters} m
-                  </Text>
-                  <Pressable onPress={increaseRadius} style={circleButtonStyle}>
-                    <Text style={[Typography.title, { color: colors.textPrimary }]}>
-                      +
-                    </Text>
-                  </Pressable>
+                  {t("verificationRadiusLabel")}
+                </Text>
+                <View
+                  className="ml-1.5"
+                  style={{
+                    transform: [{ rotate: showRadiusSection ? "180deg" : "0deg" }],
+                  }}
+                >
+                  <AppIcon name="chevronDown" size={14} color={colors.textSecondary} />
                 </View>
-              </View>
-              </View>
+              </Pressable>
+              {showRadiusSection && (
+                <View className="mb-7">
+                  <Text
+                    className="mb-3.5"
+                    style={[Typography.label, { color: colors.textSecondary }]}
+                  >
+                    {t("verificationRadiusHint")}
+                  </Text>
+                  <View
+                    className="items-center rounded-2xl py-4"
+                    style={{ backgroundColor: colors.surface }}
+                  >
+                    <View className="flex-row items-center justify-center gap-6">
+                      <Pressable onPress={decreaseRadius} style={circleButtonStyle}>
+                        <Text style={[Typography.title, { color: colors.textPrimary }]}>
+                          −
+                        </Text>
+                      </Pressable>
+                      <Text style={[Typography.title, { color: colors.primary }]}>
+                        {radiusMeters} m
+                      </Text>
+                      <Pressable onPress={increaseRadius} style={circleButtonStyle}>
+                        <Text style={[Typography.title, { color: colors.textPrimary }]}>
+                          +
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </View>
+              )}
+              {!showRadiusSection && <View className="mb-7" />}
 
               {error && (
                 <Text
@@ -443,14 +540,14 @@ export default function GymLocationSheet({
               {/* Save */}
               <Pressable
                 onPress={handleSave}
-                disabled={saving}
+                disabled={saving || deleting}
                 style={({ pressed }) => ({
                   paddingVertical: 16,
                   borderRadius: 16,
                   alignItems: "center",
                   justifyContent: "center",
                   backgroundColor: colors.primary,
-                  opacity: pressed || saving ? 0.7 : 1,
+                  opacity: pressed || saving || deleting ? 0.7 : 1,
                 })}
               >
                 {saving ? (
@@ -466,6 +563,31 @@ export default function GymLocationSheet({
                   </Text>
                 )}
               </Pressable>
+
+              {/* Delete (only when editing an existing gym) */}
+              {existingGym && (
+                <Pressable
+                  onPress={handleDelete}
+                  disabled={saving || deleting}
+                  style={({ pressed }) => ({
+                    paddingVertical: 16,
+                    borderRadius: 16,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: colors.surfaceMuted,
+                    opacity: pressed || saving || deleting ? 0.6 : 1,
+                    marginTop: 12,
+                  })}
+                >
+                  {deleting ? (
+                    <ActivityIndicator color={colors.error} />
+                  ) : (
+                    <Text style={[Typography.bodyLarge, { color: colors.error }]}>
+                      {t("delete")}
+                    </Text>
+                  )}
+                </Pressable>
+              )}
             </ScrollView>
           </KeyboardAvoidingView>
         </Animated.View>

@@ -1,19 +1,23 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { View, Text, ScrollView, StatusBar } from "react-native";
+import { View, Text, ScrollView, StatusBar, Alert } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useLocalSearchParams } from "expo-router";
 import { useTheme } from "../contexts/ThemeContext";
 import { useAuth } from "../contexts/AuthContext";
 import { useTranslation } from "../components/Localization/LanguageProvider";
 import { Typography } from "../constants/typography";
 import DayScheduleCard from "../components/DayScheduleCard";
 import DayEditSheet from "../components/DayEditSheet";
+import ScheduleViewMenu from "../components/ScheduleViewMenu";
 import ScheduleCardSkeleton from "../components/Skeleton/ScheduleCardSkeleton";
 import { TAB_BAR_HEIGHT } from "../constants/tabNavigation";
+import { useScheduleViewMode } from "../hooks/useScheduleViewMode";
 import {
   fetchActiveSchedules,
   fetchGyms,
   generateUpcomingSessions,
   getTodayDayOfWeek,
+  deleteScheduleDay,
   type WorkoutSchedule,
   type Gym,
 } from "../lib/scheduleService";
@@ -23,6 +27,12 @@ import { getCached, setCached } from "../lib/dataCache";
 function rollingWeek(startDay: number): number[] {
   return Array.from({ length: 7 }, (_, i) => (startDay + i) % 7);
 }
+
+// Monday(1) through Sunday(0), matching the day_of_week convention where
+// 0 = Sunday.
+const MONDAY_TO_SUNDAY = [1, 2, 3, 4, 5, 6, 0];
+
+type ScheduleSection = { title?: string; days: number[] };
 
 // Keep in sync with HomeScreen's CACHE_TTL_MS: any schedule edit clears both
 // via invalidateCache(), so the two only need to agree on the "too long, go
@@ -46,12 +56,25 @@ export default function ScheduleScreen() {
   const userId = session?.user?.id;
   const insets = useSafeAreaInsets();
 
+  const params = useLocalSearchParams<{ openDayOfWeek?: string }>();
+  const { viewMode, setViewMode } = useScheduleViewMode();
+
   const [schedulesByDay, setSchedulesByDay] = useState<Map<number, WorkoutSchedule>>(
     new Map(),
   );
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [todayDayOfWeek, setTodayDayOfWeek] = useState<number | null>(null);
-  const [sheetDay, setSheetDay] = useState<number | null>(null);
+  // When navigating from HomeScreen's empty Today Workout card with an
+  // openDayOfWeek param, set sheetDay immediately on first render so the
+  // bottom sheet is open from the start — no useEffect delay needed.
+  const [sheetDay, setSheetDay] = useState<number | null>(() => {
+    const param = params.openDayOfWeek;
+    if (param) {
+      const day = parseInt(param, 10);
+      if (!isNaN(day) && day >= 0 && day <= 6) return day;
+    }
+    return null;
+  });
   // Lazily seeded from the cache so a cache hit never flashes a skeleton on
   // the first paint - only a genuine network fetch flips this to true.
   const [loading, setLoading] = useState(() =>
@@ -92,10 +115,46 @@ export default function ScheduleScreen() {
   }, [loadData]);
 
   const sheetSchedule = sheetDay !== null ? schedulesByDay.get(sheetDay) ?? null : null;
-  const weekDays = useMemo(
-    () => rollingWeek(todayDayOfWeek ?? 0),
-    [todayDayOfWeek],
+
+  const handleDeleteDay = useCallback(
+    (schedule: WorkoutSchedule) => {
+      if (!userId) return;
+      Alert.alert(t("deleteScheduleTitle"), t("deleteScheduleMessage"), [
+        { text: t("cancel"), style: "cancel" },
+        {
+          text: t("delete"),
+          style: "destructive",
+          onPress: async () => {
+            await deleteScheduleDay(schedule.id, userId);
+            loadData();
+          },
+        },
+      ]);
+    },
+    [userId, t, loadData],
   );
+
+  const sections = useMemo<ScheduleSection[]>(() => {
+    if (viewMode === "weekStart") {
+      return [{ days: MONDAY_TO_SUNDAY }];
+    }
+    if (viewMode === "grouped") {
+      // Already-scheduled workout days float to the top of the Workout Days
+      // group, with not-yet-configured days (no row at all) below them.
+      const scheduledWorkoutDays = MONDAY_TO_SUNDAY.filter(
+        (day) => schedulesByDay.has(day) && !schedulesByDay.get(day)?.is_rest_day,
+      );
+      const unconfiguredDays = MONDAY_TO_SUNDAY.filter((day) => !schedulesByDay.has(day));
+      const restDays = MONDAY_TO_SUNDAY.filter(
+        (day) => schedulesByDay.get(day)?.is_rest_day,
+      );
+      return [
+        { title: t("workoutDaysGroupLabel"), days: [...scheduledWorkoutDays, ...unconfiguredDays] },
+        { title: t("restDaysGroupLabel"), days: restDays },
+      ].filter((section) => section.days.length > 0);
+    }
+    return [{ days: rollingWeek(todayDayOfWeek ?? 0) }];
+  }, [viewMode, todayDayOfWeek, schedulesByDay, t]);
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -114,30 +173,62 @@ export default function ScheduleScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ===== HEADER ===== */}
-        <View className="mb-6">
-          <Text
-            style={[
-              Typography.heading,
-              { color: colors.textPrimary, letterSpacing: -0.5 },
-            ]}
-          >
-            {t("schedule")}
-          </Text>
+        <View className="flex-row items-start justify-between mb-6">
+          <View className="flex-1 mr-3">
+            <Text
+              style={[
+                Typography.heading,
+                { color: colors.textPrimary, letterSpacing: -0.5 },
+              ]}
+            >
+              {t("schedule")}
+            </Text>
+            {!loading && schedulesByDay.size > 0 && (
+              <Text
+                className="mt-1"
+                style={[Typography.label, { color: colors.textSecondary }]}
+              >
+                {t("scheduleHelper")}
+              </Text>
+            )}
+          </View>
+          <ScheduleViewMenu value={viewMode} onChange={setViewMode} />
         </View>
 
-        {/* ===== WEEKLY ROUTINE (always 7 days, rolling from today) ===== */}
+        {/* ===== WEEKLY ROUTINE (ordered/grouped per the selected View mode) ===== */}
         {loading
           ? Array.from({ length: SKELETON_CARD_COUNT }).map((_, index) => (
               <ScheduleCardSkeleton key={index} />
             ))
-          : weekDays.map((dayOfWeek) => (
-              <DayScheduleCard
-                key={dayOfWeek}
-                dayOfWeek={dayOfWeek}
-                schedule={schedulesByDay.get(dayOfWeek) ?? null}
-                isToday={todayDayOfWeek === dayOfWeek}
-                onPress={() => setSheetDay(dayOfWeek)}
-              />
+          : sections.map((section, sectionIndex) => (
+              <View key={section.title ?? sectionIndex}>
+                {section.title && (
+                  <Text
+                    className={sectionIndex === 0 ? "mb-3" : "mt-2 mb-3"}
+                    style={[
+                      Typography.overline,
+                      { color: colors.textSecondary, letterSpacing: 1.2 },
+                    ]}
+                  >
+                    {section.title}
+                  </Text>
+                )}
+                {section.days.map((dayOfWeek) => {
+                  const daySchedule = schedulesByDay.get(dayOfWeek) ?? null;
+                  return (
+                    <DayScheduleCard
+                      key={dayOfWeek}
+                      dayOfWeek={dayOfWeek}
+                      schedule={daySchedule}
+                      isToday={todayDayOfWeek === dayOfWeek}
+                      onPress={() => setSheetDay(dayOfWeek)}
+                      onDelete={
+                        daySchedule ? () => handleDeleteDay(daySchedule) : undefined
+                      }
+                    />
+                  );
+                })}
+              </View>
             ))}
       </ScrollView>
 

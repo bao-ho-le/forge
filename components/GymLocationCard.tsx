@@ -32,69 +32,57 @@ export default function GymLocationCard({ userId }: { userId: string }) {
   return (
     <>
       {gym ? (
-        <View
-          className="rounded-[20px] p-4"
-          style={{
-            backgroundColor: colors.surface,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.04,
-            shadowRadius: 6,
-            elevation: 2,
-          }}
-        >
-          <View className="flex-row items-center gap-2.5 mb-3">
-            <View
-              className="w-9 h-9 rounded-[10px] justify-center items-center"
-              style={{ backgroundColor: colors.primaryContainer }}
-            >
-              <AppIcon
-                name="mapPin"
-                size={IconSize.sm}
-                color={colors.primary}
-                strokeWidth={1.8}
-              />
-            </View>
-            <View className="flex-1">
-              <Text style={[Typography.bodyLarge, { color: colors.textPrimary }]}>
-                {gym.name}
-              </Text>
-              {!!gym.address && (
-                <Text style={[Typography.label, { color: colors.textSecondary }]}>
-                  {gym.address}
-                </Text>
-              )}
-            </View>
-          </View>
-
-          <View
-            className="flex-row items-center justify-between border-t pt-3"
-            style={{ borderTopColor: colors.border }}
+        <>
+          <Text
+            className="mb-4"
+            style={[Typography.label, { color: colors.textSecondary }]}
           >
-            <Text style={[Typography.label, { color: colors.textSecondary }]}>
-              {t("verificationRadius")}
-            </Text>
-            <Text style={[Typography.body, { color: colors.textPrimary }]}>
-              {gym.radius_meters} m
-            </Text>
-          </View>
-
+            {t("gymLocationHelper")}
+          </Text>
           <Pressable
             onPress={() => setSheetVisible(true)}
-            className="self-end mt-3"
-            style={({ pressed }) => ({
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 4,
-              opacity: pressed ? 0.6 : 1,
-            })}
+            style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
           >
-            <AppIcon name="edit" size={14} color={colors.primary} strokeWidth={2} />
-            <Text style={[Typography.label, { color: colors.primary, fontWeight: "600" }]}>
-              {t("edit")}
-            </Text>
+            <View
+              className="rounded-[20px] p-4"
+              style={{
+                backgroundColor: colors.surface,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.06,
+                shadowRadius: 8,
+                elevation: 3,
+              }}
+            >
+              <View className="flex-row items-center">
+                <View
+                  className="w-11 h-11 rounded-xl justify-center items-center mr-3.5"
+                  style={{ backgroundColor: colors.primaryContainer }}
+                >
+                  <AppIcon
+                    name="mapPin"
+                    size={IconSize.md}
+                    color={colors.primary}
+                    strokeWidth={2}
+                  />
+                </View>
+                <View className="flex-1">
+                  <Text style={[Typography.bodyLarge, { color: colors.textPrimary }]}>
+                    {gym.name}
+                  </Text>
+                  {!!gym.address && (
+                    <Text style={[Typography.label, { color: colors.textSecondary }]}>
+                      {gym.address}
+                    </Text>
+                  )}
+                  <Text style={[Typography.label, { color: colors.textSecondary }]}>
+                    {t("verificationRadius")}: {gym.radius_meters} m
+                  </Text>
+                </View>
+              </View>
+            </View>
           </Pressable>
-        </View>
+        </>
       ) : (
         <>
           <EmptyStateCard

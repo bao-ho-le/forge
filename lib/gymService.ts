@@ -29,6 +29,17 @@ export type SaveGymInput = {
   radiusMeters: number;
 };
 
+export async function deletePrimaryGym(
+  gymId: string,
+): Promise<{ error: Error | null }> {
+  const { error } = await supabase.from("gyms").delete().eq("id", gymId);
+
+  if (error) return { error };
+
+  invalidateCache();
+  return { error: null };
+}
+
 export async function savePrimaryGym(
   userId: string,
   existingId: string | null,

@@ -102,7 +102,7 @@ export default function LockedAppsScreen() {
           className="mb-5 px-1"
           style={[Typography.label, { color: colors.textSecondary, lineHeight: 20 }]}
         >
-          Select apps to restrict during Discipline Mode.
+          Select apps to restrict during Discipline Mode
         </Text>
 
         {/* App List */}
@@ -158,26 +158,20 @@ export default function LockedAppsScreen() {
                 </Text>
                 <Pressable
                   onPress={() => removeApp(name)}
+                  hitSlop={8}
                   style={({ pressed }) => ({
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 4,
-                    marginRight: 12,
-                    paddingHorizontal: 14,
-                    paddingVertical: 7,
+                    width: 31,
+                    height: 31,
                     borderRadius: 9999,
-                    borderWidth: 1.5,
-                    borderColor: colors.border,
-                    opacity: pressed ? 0.6 : 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginRight: 12,
+                    backgroundColor: colors.surfaceMuted,
+                    opacity: pressed ? 0.7 : 1,
                   })}
                 >
-                  <Text
-                    style={[
-                      Typography.label,
-                      { color: colors.textSecondary, fontWeight: "700" },
-                    ]}
-                  >
-                    ✕ {t("removeAction")}
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textSecondary }}>
+                    ✕
                   </Text>
                 </Pressable>
                 <ThemedSwitch value={isEnabled} onValueChange={() => toggleApp(name)} />

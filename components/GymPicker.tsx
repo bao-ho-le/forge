@@ -1,34 +1,54 @@
 import React from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
+
 import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "./Localization/LanguageProvider";
 import { Typography } from "../constants/typography";
+import { IconSize } from "../constants/iconSizes";
+import AppIcon from "./Icon/AppIcon";
 import type { Gym } from "../lib/scheduleService";
 
 type GymPickerProps = {
   gyms: Gym[];
   selectedGymId: string | null;
   onSelectGym: (gymId: string | null) => void;
+  onPressAddGym?: () => void;
 };
 
 export default function GymPicker({
   gyms,
   selectedGymId,
   onSelectGym,
+  onPressAddGym,
 }: GymPickerProps) {
   const { colors } = useTheme();
   const { t } = useTranslation();
 
   if (gyms.length === 0) {
     return (
-      <View
-        className="rounded-2xl px-4 py-3.5"
+      <Pressable
+        onPress={onPressAddGym}
+        className="rounded-2xl px-4 py-3.5 flex-row items-center"
         style={{ backgroundColor: colors.surface }}
       >
-        <Text style={[Typography.body, { color: colors.textSecondary }]}>
+        <Text
+          className="flex-1"
+          style={[Typography.body, { color: colors.textSecondary }]}
+        >
           {t("noGymHint")}
         </Text>
-      </View>
+        <View
+          className="w-8 h-8 rounded-2xl justify-center items-center ml-3"
+          style={{ backgroundColor: colors.surfaceMuted }}
+        >
+          <AppIcon
+            name="chevronRight"
+            size={IconSize.sm}
+            color={colors.textSecondary}
+            strokeWidth={2.5}
+          />
+        </View>
+      </Pressable>
     );
   }
 

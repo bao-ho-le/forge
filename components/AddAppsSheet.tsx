@@ -228,48 +228,45 @@ export default function AddAppsSheet({
                       {isAdded ? (
                         <Pressable
                           onPress={() => onRemove(app.name)}
+                          hitSlop={8}
                           style={({ pressed }) => ({
-                            flexDirection: "row",
-                            alignItems: "center",
-                            gap: 4,
-                            paddingHorizontal: 14,
-                            paddingVertical: 7,
+                            width: 31,
+                            height: 31,
                             borderRadius: 9999,
-                            borderWidth: 1.5,
-                            borderColor: colors.border,
-                            opacity: pressed ? 0.6 : 1,
+                            justifyContent: "center",
+                            alignItems: "center",
+                            backgroundColor: colors.surfaceMuted,
+                            opacity: pressed ? 0.7 : 1,
                           })}
                         >
-                          <Text
-                            style={[
-                              Typography.label,
-                              { color: colors.textSecondary, fontWeight: "700" },
-                            ]}
-                          >
-                            ✕ {t("removeAction")}
+                          <Text style={{ fontSize: 13, fontWeight: "700", color: colors.textSecondary }}>
+                            ✕
                           </Text>
                         </Pressable>
                       ) : (
                         <Pressable
                           onPress={() => onAdd(app.name)}
+                          hitSlop={8}
                           style={({ pressed }) => ({
-                            flexDirection: "row",
-                            alignItems: "center",
-                            gap: 4,
-                            paddingHorizontal: 14,
-                            paddingVertical: 7,
+                            width: 31,
+                            height: 31,
                             borderRadius: 9999,
+                            justifyContent: "center",
+                            alignItems: "center",
                             backgroundColor: colors.primary,
                             opacity: pressed ? 0.85 : 1,
                           })}
                         >
                           <Text
-                            style={[
-                              Typography.label,
-                              { color: colors.onPrimary, fontWeight: "700" },
-                            ]}
+                            style={{
+                              fontSize: 20,
+                              fontWeight: "600",
+                              lineHeight: 22,
+                              textAlign: "center",
+                              color: colors.onPrimary,
+                            }}
                           >
-                            + {t("addAction")}
+                            +
                           </Text>
                         </Pressable>
                       )}

@@ -17,6 +17,7 @@ import Animated, {
   withTiming,
   runOnJS,
 } from "react-native-reanimated";
+import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "./Localization/LanguageProvider";
@@ -151,7 +152,8 @@ export default function DayEditSheet({
       setTitle(t("presetGeneral"));
       setIsCustomTitle(false);
       setSelectedTime("18:00");
-      setSelectedGymId(null);
+      const defaultGym = gyms.find((g) => g.is_primary);
+      setSelectedGymId(defaultGym?.id ?? null);
       setReminderEnabled(true);
     }
     setShowDayError(false);
@@ -355,8 +357,18 @@ export default function DayEditSheet({
                 />
               </View>
 
-              {!isRestDay && (
-                <View onLayout={(e) => setWorkoutSectionHeight(e.nativeEvent.layout.height)}>
+              {/* Always mounted (even when Rest Day is on) so its height is
+                  measured on the very first render regardless of which kind
+                  of day is opened first — otherwise workoutSectionHeight
+                  could still be its initial 0 the first time a day that's
+                  already a Rest Day is opened, collapsing the spacer below
+                  and shrinking the sheet. Positioned absolutely + hidden
+                  while Rest Day is on so it takes no space in the flow. */}
+              <View
+                onLayout={(e) => setWorkoutSectionHeight(e.nativeEvent.layout.height)}
+                pointerEvents={isRestDay ? "none" : "auto"}
+                style={isRestDay ? { position: "absolute", left: 0, right: 0, opacity: 0 } : undefined}
+              >
                   {/* Workout Title */}
                   <View className="mb-2">
                     <View className="flex-row items-center gap-1.5 mb-3.5">
@@ -424,6 +436,10 @@ export default function DayEditSheet({
                       gyms={gyms}
                       selectedGymId={selectedGymId}
                       onSelectGym={setSelectedGymId}
+                      onPressAddGym={() => {
+                        onClose();
+                        router.push("/gym-location");
+                      }}
                     />
                   </View>
 
@@ -471,7 +487,6 @@ export default function DayEditSheet({
                   )}
                   {!showReminderSection && <View className="mb-7" />}
                 </View>
-              )}
 
               {/* Apply to other days: optional, collapsed by default. Sits
                   after the workout fields (or their spacer) so it renders

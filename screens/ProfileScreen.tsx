@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, StatusBar, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, {
@@ -19,6 +19,7 @@ import ProfileSettingRow from "../components/ProfileSettingRow";
 import AppearanceSelector from "../components/AppearanceSelector";
 import { TAB_BAR_HEIGHT } from "../constants/tabNavigation";
 import ThemedSwitch from "../components/ThemedSwitch";
+import { fetchPrimaryGym } from "../lib/gymService";
 
 export default function ProfileScreen() {
   const { colors, isDark } = useTheme();
@@ -28,9 +29,20 @@ export default function ProfileScreen() {
   const displayName = profile?.full_name || session?.user?.email || "";
   const email = session?.user?.email ?? "";
 
+  const [gymName, setGymName] = useState<string | null>(null);
   const [remindersEnabled, setRemindersEnabled] = useState(true);
   const [alertsEnabled, setAlertsEnabled] = useState(true);
   const [disciplineModeEnabled, setDisciplineModeEnabled] = useState(true);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchPrimaryGym(session.user.id).then((gym) => {
+        setGymName(gym?.name ?? null);
+      }).catch(() => {
+        setGymName(null);
+      });
+    }
+  }, [session?.user?.id]);
 
   const scale = useSharedValue(1);
   const signOutStyle = useAnimatedStyle(() => ({
@@ -116,6 +128,8 @@ export default function ProfileScreen() {
           <ProfileSettingRow
             icon="mapPin"
             title={t("gymLocation")}
+            value={gymName ?? t("noGymSelected")}
+            valueNumberOfLines={1}
             isLast={false}
             onPress={() => router.push("/gym-location")}
           />

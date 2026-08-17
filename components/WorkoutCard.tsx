@@ -66,8 +66,8 @@ export default function WorkoutCard({
         elevation: 4,
       }}
     >
-      {/* Top Row: Icon + Name + Status */}
-      <View className="flex-row items-center mb-4">
+      {/* Top Row: Icon + Name/Info + Status */}
+      <View className="flex-row items-center mb-5">
         {/* Icon container - 48x48, rounded 16px */}
         <View
           className="w-12 h-12 rounded-2xl justify-center items-center mr-3.5"
@@ -81,7 +81,7 @@ export default function WorkoutCard({
           />
         </View>
 
-        {/* Name */}
+        {/* Name + Time/Location */}
         <View className="flex-1">
           <Text
             style={[
@@ -91,6 +91,30 @@ export default function WorkoutCard({
           >
             {name}
           </Text>
+          <View className="flex-row items-center mt-1 gap-3">
+            <View className="flex-row items-center gap-1.5">
+              <AppIcon
+                name="clock"
+                size={IconSize.sm}
+                color={colors.textSecondary}
+                strokeWidth={2}
+              />
+              <Text style={[Typography.label, { color: colors.textSecondary }]}>
+                {time}
+              </Text>
+            </View>
+            <View className="flex-row items-center gap-1.5">
+              <AppIcon
+                name="mapPin"
+                size={IconSize.sm}
+                color={colors.textSecondary}
+                strokeWidth={2}
+              />
+              <Text style={[Typography.label, { color: colors.textSecondary }]}>
+                {location}
+              </Text>
+            </View>
+          </View>
         </View>
 
         {/* Status Badge */}
@@ -104,32 +128,6 @@ export default function WorkoutCard({
             </Text>
           </View>
         )}
-      </View>
-
-      {/* Second Row: Info */}
-      <View className="flex-row items-center mb-5 gap-5">
-        <View className="flex-row items-center gap-1.5">
-          <AppIcon
-            name="clock"
-            size={IconSize.sm}
-            color={colors.textSecondary}
-            strokeWidth={2}
-          />
-          <Text style={[Typography.label, { color: colors.textSecondary }]}>
-            {time}
-          </Text>
-        </View>
-        <View className="flex-row items-center gap-1.5">
-          <AppIcon
-            name="mapPin"
-            size={IconSize.sm}
-            color={colors.textSecondary}
-            strokeWidth={2}
-          />
-          <Text style={[Typography.label, { color: colors.textSecondary }]}>
-            {location}
-          </Text>
-        </View>
       </View>
 
       {/* Bottom Row: Buttons */}

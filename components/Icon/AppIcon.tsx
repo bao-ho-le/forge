@@ -470,11 +470,12 @@ function CalendarEmpty({ color, strokeWidth }: IconComponentProps) {
   const sp = strokeProps(strokeWidth);
   return (
     <G fill="none" {...sp} stroke={color}>
-      <Rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <Line x1="16" y1="2" x2="16" y2="6" />
-      <Line x1="8" y1="2" x2="8" y2="6" />
-      <Line x1="3" y1="10" x2="21" y2="10" />
-      <Line x1="9" y1="16" x2="15" y2="16" />
+      <Rect x="1" y="2" width="22" height="21" rx="2" ry="2" />
+      <Line x1="16" y1="0" x2="16" y2="4" />
+      <Line x1="8" y1="0" x2="8" y2="4" />
+      <Line x1="1" y1="7" x2="23" y2="7" />
+      <Line x1="9" y1="15" x2="15" y2="15" />
+      <Line x1="12" y1="12" x2="12" y2="18" />
     </G>
   );
 }

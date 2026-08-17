@@ -10,6 +10,7 @@ import { IconSize } from "../constants/iconSizes";
 import WorkoutCard from "../components/WorkoutCard";
 import RecoveryCard from "../components/RecoveryCard";
 import EmptyStateCard from "../components/EmptyStateCard";
+import DayScheduleCard from "../components/DayScheduleCard";
 import ThemeToggle from "../components/ThemeToggle";
 import AppIcon from "../components/Icon/AppIcon";
 import WorkoutCardSkeleton from "../components/Skeleton/WorkoutCardSkeleton";
@@ -19,13 +20,10 @@ import SkeletonBone from "../components/Skeleton/SkeletonBone";
 import { TAB_BAR_HEIGHT } from "../constants/tabNavigation";
 import {
   fetchScheduleForDay,
-  fetchUpcomingSessionsPreview,
+  fetchActiveSchedules,
   generateUpcomingSessions,
   getTodayDayOfWeek,
-  getTodayDate,
-  addDays,
   type WorkoutSchedule,
-  type UpcomingSessionPreview,
 } from "../lib/scheduleService";
 import { getCached, setCached } from "../lib/dataCache";
 
@@ -36,8 +34,8 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 
 type HomeCacheData = {
   todaySchedule: WorkoutSchedule | null;
-  upcomingPreview: UpcomingSessionPreview[];
-  tomorrowDate: string;
+  schedules: WorkoutSchedule[];
+  todayDayOfWeek: number;
 };
 
 function formatTodayLabel(locale: string): string {
@@ -54,16 +52,6 @@ function toDisplayTime(time24: string): string {
   return `${hour}:${String(m).padStart(2, "0")}`;
 }
 
-// Preview is bounded to the next 7 days (see fetchUpcomingSessionsPreview),
-// so each weekday can appear at most once — a bare weekday name is safe.
-function formatShortWeekday(dateStr: string, locale: string): string {
-  const date = new Date(`${dateStr}T00:00:00Z`);
-  return new Intl.DateTimeFormat(locale, {
-    weekday: "short",
-    timeZone: "UTC",
-  }).format(date);
-}
-
 export default function HomeScreen() {
   const { colors, isDark } = useTheme();
   const { t, language } = useTranslation();
@@ -73,8 +61,10 @@ export default function HomeScreen() {
   const locale = language === "vi" ? "vi-VN" : "en-US";
 
   const [todaySchedule, setTodaySchedule] = useState<WorkoutSchedule | null>(null);
-  const [upcomingPreview, setUpcomingPreview] = useState<UpcomingSessionPreview[]>([]);
-  const [tomorrowDate, setTomorrowDate] = useState<string | null>(null);
+  const [schedulesByDay, setSchedulesByDay] = useState<Map<number, WorkoutSchedule>>(
+    new Map(),
+  );
+  const [todayDayOfWeek, setTodayDayOfWeek] = useState<number | null>(null);
   // Lazily seeded from the cache so a cache hit never flashes a skeleton on
   // the first paint - only a genuine network fetch flips this to true.
   const [loading, setLoading] = useState(() =>
@@ -87,8 +77,8 @@ export default function HomeScreen() {
     const cached = getCached<HomeCacheData>(cacheKey, CACHE_TTL_MS);
     if (cached) {
       setTodaySchedule(cached.todaySchedule);
-      setUpcomingPreview(cached.upcomingPreview);
-      setTomorrowDate(cached.tomorrowDate);
+      setSchedulesByDay(new Map(cached.schedules.map((s) => [s.day_of_week, s])));
+      setTodayDayOfWeek(cached.todayDayOfWeek);
       setLoading(false);
       return;
     }
@@ -98,22 +88,18 @@ export default function HomeScreen() {
     } catch (err) {
       console.error("generateUpcomingSessions failed", err);
     }
-    const [todayDow, today] = await Promise.all([
-      getTodayDayOfWeek(userId),
-      getTodayDate(userId),
-    ]);
-    const [schedule, preview] = await Promise.all([
+    const todayDow = await getTodayDayOfWeek(userId);
+    const [schedule, scheduleList] = await Promise.all([
       fetchScheduleForDay(userId, todayDow),
-      fetchUpcomingSessionsPreview(userId, 3),
+      fetchActiveSchedules(userId),
     ]);
-    const tomorrowDate = addDays(today, 1);
     setTodaySchedule(schedule);
-    setUpcomingPreview(preview);
-    setTomorrowDate(tomorrowDate);
+    setSchedulesByDay(new Map(scheduleList.map((s) => [s.day_of_week, s])));
+    setTodayDayOfWeek(todayDow);
     setCached<HomeCacheData>(cacheKey, {
       todaySchedule: schedule,
-      upcomingPreview: preview,
-      tomorrowDate,
+      schedules: scheduleList,
+      todayDayOfWeek: todayDow,
     });
     setLoading(false);
   }, [userId]);
@@ -124,6 +110,19 @@ export default function HomeScreen() {
 
   const isRestDay = todaySchedule?.is_rest_day ?? false;
   const isWorkoutDay = !!todaySchedule && !isRestDay;
+  // Up to the next 3 configured days after today (workout or rest day only —
+  // days with no schedule at all are skipped), scanning the rest of the
+  // rolling week to find them. Today's Workout already covers today, so the
+  // scan starts at +1.
+  const upcomingDays = (() => {
+    if (todayDayOfWeek === null) return [];
+    const days: number[] = [];
+    for (let i = 1; i <= 6 && days.length < 3; i++) {
+      const day = (todayDayOfWeek + i) % 7;
+      if (schedulesByDay.has(day)) days.push(day);
+    }
+    return days;
+  })();
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -229,80 +228,105 @@ export default function HomeScreen() {
               description={t("restDayDesc")}
             />
           ) : (
-            <EmptyStateCard
-              message={t("noTodayWorkout")}
-              description={t("noTodayWorkoutDesc")}
-            />
-          )}
-        </View>
-
-        {/* ===== UPCOMING SCHEDULE SECTION ===== */}
-        <View className="mb-6">
-          {loading ? (
-            <UpcomingScheduleSkeleton />
-          ) : (
-            <>
-              <Text
-                className="mb-3.5"
-                style={[
-                  Typography.overline,
-                  { color: colors.textSecondary, letterSpacing: 1.2 },
-                ]}
+            <Pressable
+              onPress={() =>
+                router.push({
+                  pathname: "/calendar",
+                  params: {
+                    openDayOfWeek: String(todayDayOfWeek ?? 0),
+                    tabDirection: "right",
+                  },
+                })
+              }
+              style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+            >
+              <View
+                className="rounded-[20px] p-6"
+                style={{
+                  backgroundColor: colors.surface,
+                  shadowColor: isDark ? "#000" : "#2C3E5B",
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: isDark ? 0.25 : 0.06,
+                  shadowRadius: 8,
+                  elevation: 3,
+                }}
               >
-                {t("upcomingSchedule")}
-              </Text>
-
-              {upcomingPreview.length > 0 ? (
-                <View
-                  className="rounded-[20px] px-4 py-1"
-                  style={{
-                    backgroundColor: colors.surface,
-                    shadowColor: isDark ? "#000" : "#2C3E5B",
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: isDark ? 0.25 : 0.06,
-                    shadowRadius: 8,
-                    elevation: 3,
-                  }}
-                >
-                  {upcomingPreview.map((item, index) => {
-                    const dayLabel =
-                      item.scheduled_date === tomorrowDate
-                        ? t("tomorrow")
-                        : formatShortWeekday(item.scheduled_date, locale);
-                    return (
-                      <View
-                        key={item.id}
-                        className="flex-row py-3"
-                        style={{
-                          borderTopWidth: index === 0 ? 0 : 1,
-                          borderTopColor: colors.border,
-                        }}
-                      >
-                        <Text
-                          style={[
-                            Typography.body,
-                            { color: colors.textPrimary, fontWeight: "600" },
-                          ]}
-                        >
-                          {dayLabel}
-                        </Text>
-                        <Text style={[Typography.body, { color: colors.textSecondary }]}>
-                          {"  —  "}
-                          {item.title ?? t("workoutName")}
-                        </Text>
-                      </View>
-                    );
-                  })}
+                <View className="items-center">
+                  <View
+                    className="rounded-full justify-center items-center mb-3"
+                    style={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: 30,
+                      backgroundColor: colors.primaryContainer,
+                    }}
+                  >
+                    <AppIcon
+                      name="calendarEmpty"
+                      size={IconSize.lg}
+                      color={colors.textSecondary}
+                      strokeWidth={1.5}
+                    />
+                  </View>
+                  <Text
+                    className="text-center"
+                    style={[Typography.bodyLarge, { color: colors.textSecondary }]}
+                  >
+                    {t("noTodayWorkout")}
+                  </Text>
+                  <Text
+                    className="text-center mt-1"
+                    style={[Typography.label, { color: colors.textSecondary }]}
+                  >
+                    {t("tapToAddTodayWorkout")}
+                  </Text>
                 </View>
-              ) : (
-                <EmptyStateCard
-                  message={t("noUpcomingWorkout")}
-                  description={t("noUpcomingWorkoutDesc")}
-                />
-              )}
-            </>
+              </View>
+            </Pressable>
           )}
         </View>
+
+        {/* ===== UPCOMING SCHEDULE SECTION =====
+            mb-2 here, not mb-6: the last DayScheduleCard already carries its
+            own mb-4 (used for spacing between cards), so 8+16=24 matches the
+            24px gap after Today Workout (whose card has no built-in margin). */}
+        {(loading || upcomingDays.length > 0) && (
+          <View className="mb-2">
+            {loading ? (
+              <UpcomingScheduleSkeleton />
+            ) : (
+              <>
+                <Text
+                  className="mb-3.5"
+                  style={[
+                    Typography.overline,
+                    { color: colors.textSecondary, letterSpacing: 1.2 },
+                  ]}
+                >
+                  {t("upcomingSchedule")}
+                </Text>
+
+                {upcomingDays.map((day) => (
+                  <DayScheduleCard
+                    key={day}
+                    dayOfWeek={day}
+                    schedule={schedulesByDay.get(day) ?? null}
+                    isToday={false}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/calendar",
+                        params: {
+                          openDayOfWeek: String(day),
+                          tabDirection: "right",
+                        },
+                      })
+                    }
+                  />
+                ))}
+              </>
+            )}
+          </View>
+        )}
 
         {/* ===== RECOVERY SECTION ===== */}
         <View>

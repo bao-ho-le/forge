@@ -60,3 +60,14 @@ export const Colors = {
 
 export type ThemeColors = (typeof Colors)[ThemeName];
 export type ThemeName = "light" | "dark";
+
+// Appends an alpha channel to a 6-digit hex token (e.g. `border`,
+// `textSecondary`) for a neutral tint background — RN parses 8-digit hex
+// colors natively on both platforms, so no rgba() conversion is needed.
+export function withAlpha(hex: string, alpha: number): string {
+  const clamped = Math.max(0, Math.min(1, alpha));
+  const alphaHex = Math.round(clamped * 255)
+    .toString(16)
+    .padStart(2, "0");
+  return `${hex}${alphaHex}`;
+}

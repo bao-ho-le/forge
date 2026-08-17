@@ -1,10 +1,21 @@
 import React from "react";
 import { View, Text, Pressable, TextInput } from "react-native";
+import { Dumbbell } from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import { useTranslation } from "./Localization/LanguageProvider";
 import { Typography } from "../constants/typography";
 import { IconSize } from "../constants/iconSizes";
-import AppIcon from "./Icon/AppIcon";
+import {
+  UpperBodyIcon,
+  LowerBodyIcon,
+  ChestIcon,
+  BackIcon,
+  LegIcon,
+  ArmIcon,
+  CardioIcon,
+  FullBodyIcon,
+  type WorkoutTypeIconProps,
+} from "./icons/WorkoutTypeIcons";
 import type { Translations } from "../locales/vi";
 
 // Fixed row groups (not flex-wrap) so the layout always breaks exactly here,
@@ -15,6 +26,20 @@ const PRESET_ROWS: (keyof Translations)[][] = [
   ["presetCardio", "presetFullBody"],
   ["presetGeneral"],
 ];
+
+// Same icon set as the schedule cards (WORKOUT_TYPE_ICON_MAP), keyed by
+// preset key instead of translated label since the key is known directly
+// here. General/custom have no bespoke icon and fall back to Dumbbell.
+const PRESET_ICON_MAP: Partial<Record<keyof Translations, React.ComponentType<WorkoutTypeIconProps>>> = {
+  presetUpperBody: UpperBodyIcon,
+  presetLowerBody: LowerBodyIcon,
+  presetChest: ChestIcon,
+  presetBack: BackIcon,
+  presetLegs: LegIcon,
+  presetArm: ArmIcon,
+  presetCardio: CardioIcon,
+  presetFullBody: FullBodyIcon,
+};
 
 type WorkoutTypePickerProps = {
   title: string;
@@ -39,6 +64,7 @@ export default function WorkoutTypePicker({
     label: string,
     isSelected: boolean,
     onPress: () => void,
+    Icon: React.ComponentType<WorkoutTypeIconProps> = Dumbbell,
   ) => (
     <Pressable
       key={key}
@@ -54,8 +80,7 @@ export default function WorkoutTypePicker({
         opacity: pressed ? 0.85 : 1,
       })}
     >
-      <AppIcon
-        name="dumbbell"
+      <Icon
         size={IconSize.sm}
         color={isSelected ? colors.onPrimary : colors.textSecondary}
         strokeWidth={2}
@@ -87,8 +112,12 @@ export default function WorkoutTypePicker({
         >
           {row.map((key) => {
             const label = t(key);
-            return renderChip(key, label, !isCustom && title === label, () =>
-              onSelectPreset(label),
+            return renderChip(
+              key,
+              label,
+              !isCustom && title === label,
+              () => onSelectPreset(label),
+              PRESET_ICON_MAP[key],
             );
           })}
           {rowIndex === PRESET_ROWS.length - 1 &&

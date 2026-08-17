@@ -10,6 +10,7 @@ type ProfileSettingRowProps = {
   icon: IconName;
   title: string;
   value?: string;
+  valueNumberOfLines?: number;
   showArrow?: boolean;
   isLast?: boolean;
   onPress?: () => void;
@@ -23,6 +24,7 @@ export default function ProfileSettingRow({
   icon,
   title,
   value,
+  valueNumberOfLines,
   showArrow = true,
   isLast = false,
   onPress,
@@ -75,6 +77,7 @@ export default function ProfileSettingRow({
       {value && (
         <Text
           className="mr-2"
+          numberOfLines={valueNumberOfLines}
           style={[Typography.label, { color: colors.textSecondary }]}
         >
           {value}

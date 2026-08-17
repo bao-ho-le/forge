@@ -162,16 +162,22 @@ export default function RecoveryWorkoutSettingsScreen() {
                 onBlur={finishEditing}
                 onSubmitEditing={finishEditing}
                 maxLength={3}
-                className="text-center py-0"
                 style={[
                   Typography.display,
-                  { color: colors.primary, letterSpacing: -1, width: 80 },
+                  {
+                    color: colors.primary,
+                    letterSpacing: -1,
+                    width: 80,
+                    textAlign: "center",
+                    paddingVertical: 0,
+                  },
                 ]}
               />
             ) : (
               <Pressable
                 onPress={startEditing}
                 style={({ pressed }) => ({
+                  width: 80,
                   opacity: pressed ? 0.7 : 1,
                   transform: [{ scale: pressed ? 0.92 : 1 }],
                 })}
@@ -179,7 +185,7 @@ export default function RecoveryWorkoutSettingsScreen() {
                 <Text
                   style={[
                     Typography.display,
-                    { color: colors.primary, letterSpacing: -1 },
+                    { color: colors.primary, letterSpacing: -1, textAlign: "center" },
                   ]}
                 >
                   {reps}
