@@ -2,20 +2,20 @@
 
 Ứng dụng di động hỗ trợ duy trì kỷ luật tập luyện: đặt lịch tập, xác minh khi đến phòng gym, và chế độ "Discipline Mode" khóa các app gây xao nhãng nếu bỏ lỡ buổi tập.
 
-## Thành viên
+## Nhóm 23
 
-| Họ tên | MSSV |
-|---|---|
-| Lê Võ | N22DCCN097 |
+| Họ tên           | MSSV       |
+| ---------------- | ---------- |
+| Lê Võ            | N22DCCN097 |
 | Trần Nhật Nguyên | N22DCCN057 |
 
 ## Ảnh chụp màn hình
 
-| | |
-|---|---|
-| ![Home](docs/screenshots/home-dark.jpg) Trang chủ — bài tập hôm nay và lịch sắp tới | ![Home light](docs/screenshots/home-light.jpg) Trang chủ ở giao diện sáng |
-| ![Schedule](docs/screenshots/schedule-list.jpg) Lịch tập theo tuần, chạm để chỉnh sửa/xóa | ![Schedule edit](docs/screenshots/schedule-edit.jpg) Đặt loại bài tập, giờ tập và phòng gym |
-| ![Discipline Mode](docs/screenshots/discipline-mode.jpg) Chế độ kỷ luật: khóa app khi bỏ lỡ buổi tập | ![Profile](docs/screenshots/profile.jpg) Hồ sơ cá nhân và cài đặt |
+|                                                                                                                    |                                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
+| <img src="docs/screenshots/home-dark.jpg" width="414" /><br>Trang chủ — bài tập hôm nay và lịch sắp tới            | <img src="docs/screenshots/home-light.jpg" width="414" /><br>Trang chủ ở giao diện sáng                   |
+| <img src="docs/screenshots/schedule-list.jpg" width="414" /><br>Lịch tập theo tuần, chạm để chỉnh sửa/xóa          | <img src="docs/screenshots/schedule-edit.jpg" width="414" /><br>Đặt loại bài tập, giờ tập và phòng gym    |
+| <img src="docs/screenshots/discipline-mode.jpg" width="414" /><br>Chế độ kỷ luật: khóa app khi bỏ lỡ buổi tập      | <img src="docs/screenshots/profile.jpg" width="414" /><br>Hồ sơ cá nhân và cài đặt                        |
 
 ## Công nghệ sử dụng
 
