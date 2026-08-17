@@ -9,6 +9,14 @@
 | Lê Võ | N22DCCN097 |
 | Trần Nhật Nguyên | N22DCCN057 |
 
+## Ảnh chụp màn hình
+
+| | |
+|---|---|
+| ![Home](docs/screenshots/home-dark.jpg) Trang chủ — bài tập hôm nay và lịch sắp tới | ![Home light](docs/screenshots/home-light.jpg) Trang chủ ở giao diện sáng |
+| ![Schedule](docs/screenshots/schedule-list.jpg) Lịch tập theo tuần, chạm để chỉnh sửa/xóa | ![Schedule edit](docs/screenshots/schedule-edit.jpg) Đặt loại bài tập, giờ tập và phòng gym |
+| ![Discipline Mode](docs/screenshots/discipline-mode.jpg) Chế độ kỷ luật: khóa app khi bỏ lỡ buổi tập | ![Profile](docs/screenshots/profile.jpg) Hồ sơ cá nhân và cài đặt |
+
 ## Công nghệ sử dụng
 
 - [Expo](https://expo.dev) + [Expo Router](https://docs.expo.dev/router/introduction/) (React Native, TypeScript)
