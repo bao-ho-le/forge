@@ -1,4 +1,4 @@
-# Discipline
+# Forge
 
 Ứng dụng di động hỗ trợ duy trì kỷ luật tập luyện: đặt lịch tập, xác minh khi đến phòng gym, và chế độ "Discipline Mode" khóa các app gây xao nhãng nếu bỏ lỡ buổi tập.
 
