@@ -4,10 +4,10 @@
 
 ## Nhóm 23
 
-| Họ tên           | MSSV       |
-| ---------------- | ---------- |
-| Lê Võ            | N22DCCN097 |
-| Trần Nhật Nguyên | N22DCCN057 |
+| Họ tên           | MSSV       | Vai trò        |
+| ---------------- | ---------- | -------------- |
+| Lê Võ            | N22DCCN097 | Nhóm trưởng    |
+| Trần Nhật Nguyên | N22DCCN057 | Thành viên     |
 
 ## Ảnh chụp màn hình
 
